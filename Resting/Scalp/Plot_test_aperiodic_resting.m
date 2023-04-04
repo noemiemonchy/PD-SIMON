@@ -120,9 +120,10 @@ fake_data = zeros(1, sum(offset_fdr));
 % Offset
 pvaldata1offset = figure
 topoplot(fake_data,chanlocs(offset_fdr), 'electrodes', 'on', ...
-    'emarkersize', 25, 'electcolor', [0.8500 0.3250 0.0980])
+    'emarkersize', 5)
 colormap(redbluecmap)
 set(gcf,'Position',[100 100 300 300])
+colorbar
 print(pvaldata1offset, "pdata1off", '-dpng', '-r1000') % pour la résolution  de l'image
 
 % Exponent
@@ -135,4 +136,7 @@ set(gcf,'Position',[100 100 300 300])
 print(pvaldata1expo, "pdata1off", '-dpng', '-r1000') % pour la résolution  de l'image
 
 
+hold on
+topoplot(fake_data,chanlocs(offset_fdr), 'electrodes', 'on', ...
+    'emarkersize', 5)
 
