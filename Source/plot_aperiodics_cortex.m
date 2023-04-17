@@ -1,83 +1,94 @@
 %% Plot aperiodic data on cortex
 
-% Uses the Simple Brain Plot toolbox
-
-%% Add GitHub folder to path
-
-path = uigetdir;
-addpath(genpath(path));
-
-
-%% Add Simple Brain Plot to path
-
-path = uigetdir;
-addpath(genpath(path));
-
-load('regionDescriptions.mat')
-regionDescriptions.aparc_aseg(1:14)=[];
-
-
-
-%% Define colormap
-
-cm = plasma;
 
 %% Create a group-averaged exponent and offset
 
-% for HC
+% Load specparam results for HC and PD in Pre/Post/Rest conditions
 
 path = uigetdir;
 cd(path);
+addpath(genpath(path))
+% Rest
+load('specrest_HC_sorted.mat')
+load('specrest_PD_sorted.mat')
+% Pre
+load('specpre_HC_sorted.mat')
+load('specpre_PD_sorted.mat')
+% Post
+load('specpost_HC_sorted.mat')
+load('specpost_PD_sorted.mat')
 
-load('specparam_hc.mat')
+nROI = 68;
+% Create a matrix for PD and HC with all the results
+% nsub * ROI * condition (1 rest / 2 pre/3 post) * aperio (1 expo/2 offset) 
+HC = zeros(length(specparam_post_HC_sorted), nROI, 3, 2);
+% Same but for the task, differenciating c and ic, % nsub * ROI * condition (1 c / 2 ic) * aperio (1 expo/2 offset) 
+HCtask = zeros(length(specparam_post_HC_sorted), nROI, 2, 2)
 
-% exponent
-exponent_hc = zeros(length(specparam_hc), 68);
+% Same for PD
+PD = zeros(length(specparam_post_PD_sorted), nROI, 3, 2);
+PDtask = zeros(length(specparam_post_PD_sorted), nROI, 2, 2)
 
-for subi = 1:size(exponent_hc,1)
-    exponent_hc(subi, : ) = [specparam_hc(subi).aperiodics.exponent];
+% For HC
+for subi = 1:size(HC, 1) 
+    HC(subi, : , 1, 1) = [specparam_source_hc_sorted(subi).spec.aperiodics.exponent]  ; % rest, expo
+    HC(subi, : , 1, 2) = [specparam_source_hc_sorted(subi).spec.aperiodics.offset]  ; % rest, offset
+    
+    HC(subi, : , 2, 1) = [specparam_pre_HC_sorted(subi).spec.aperiodics.exponent]  ; % pre, expo
+    HC(subi, : , 2, 2) = [specparam_pre_HC_sorted(subi).spec.aperiodics.offset]  ; % pre, offset
+    
+    temp_exp(:,1) = [specparam_post_HC_sorted(subi).c.aperiodics.exponent];
+    temp_exp(:,2) = [specparam_post_HC_sorted(subi).ic.aperiodics.exponent];
+    
+    HC(subi, : , 3, 1) = mean(temp_exp,2)  ; % post, expo
+    
+    
+    temp_off(:,1) = [specparam_post_HC_sorted(subi).c.aperiodics.offset];
+    temp_off(:,2) = [specparam_post_HC_sorted(subi).ic.aperiodics.offset];
+    HC(subi, : , 3, 2) = mean(temp_off,2) ; % post, offset
+    
+    HCtask(subi,:,1,1) = [specparam_post_HC_sorted(subi).c.aperiodics.exponent];
+    HCtask(subi,:,2,1) = [specparam_post_HC_sorted(subi).ic.aperiodics.exponent];
+    HCtask(subi,:,1,2) = [specparam_post_HC_sorted(subi).c.aperiodics.offset];
+    HCtask(subi,:,2,2) = [specparam_post_HC_sorted(subi).ic.aperiodics.offset];
 end
 
-offset_hc = zeros(length(specparam_hc), 68);
 
-for subi = 1:size(offset_hc,1)
-    offset_hc(subi, : ) = [specparam_hc(subi).aperiodics.offset];
+% For PD
+for subi = 1:size(PD, 1) 
+    PD(subi, : , 1, 1) = [specparam_source_pd_sorted(subi).spec.aperiodics.exponent]  ; % rest, expo
+    PD(subi, : , 1, 2) = [specparam_source_pd_sorted(subi).spec.aperiodics.offset]  ; % rest, offset
+    
+    PD(subi, : , 2, 1) = [specparam_pre_PD_sorted(subi).spec.aperiodics.exponent]  ; % pre, expo
+    PD(subi, : , 2, 2) = [specparam_pre_PD_sorted(subi).spec.aperiodics.offset]  ; % pre, offset
+    
+    temp_exp(:,1) = [specparam_post_PD_sorted(subi).c.aperiodics.exponent];
+    temp_exp(:,2) = [specparam_post_PD_sorted(subi).ic.aperiodics.exponent];
+    
+    PD(subi, : , 3, 1) = mean(temp_exp,2)  ; % post, expo
+    
+    
+    temp_off(:,1) = [specparam_post_PD_sorted(subi).c.aperiodics.offset];
+    temp_off(:,2) = [specparam_post_PD_sorted(subi).ic.aperiodics.offset];
+    PD(subi, : , 3, 2) = mean(temp_off,2) ; % post, offset
+    
+    PDtask(subi,:,1,1) = [specparam_post_PD_sorted(subi).c.aperiodics.exponent];
+    PDtask(subi,:,2,1) = [specparam_post_PD_sorted(subi).ic.aperiodics.exponent];
+    PDtask(subi,:,1,2) = [specparam_post_PD_sorted(subi).c.aperiodics.offset];
+    PDtask(subi,:,2,2) = [specparam_post_PD_sorted(subi).ic.aperiodics.offset];
 end
 
-% brain plots
+temp_exp_HC = squeeze(HC(:,:,:,1));
+temp_exp_PD = squeeze(PD(:,:,:,1));
 
-plotBrain(regionDescriptions.aparc_aseg, mean(exponent_hc,1), cm, 'atlas', 'aparc', 'limits', [0.6, 1.2])
-plotBrain(regionDescriptions.aparc_aseg, mean(offset_hc,1), cm, 'atlas', 'aparc', 'limits', [-23, -19])
+temp_off_HC = squeeze(HC(:,:,:,2));
+temp_off_PD = squeeze(PD(:,:,:,2));
 
-
-% for PD
-
-path = uigetdir;
-cd(path);
-
-load('specparam_pd.mat')
-specparam_pd(8) = []; % remove line 8 because subject 8 has no eeg data
-
-% exponent
-exponent_pd = zeros(length(specparam_pd), 68);
-
-for subi = 1:size(exponent_pd,1)
-    exponent_pd(subi, : ) = [specparam_pd(subi).aperiodics.exponent];
-end
-
-offset_pd = zeros(length(specparam_pd), 68);
-
-for subi = 1:size(offset_pd,1)
-    offset_pd(subi, : ) = [specparam_pd(subi).aperiodics.offset];
-end
-
-% brain plots
-
-plotBrain(regionDescriptions.aparc_aseg, mean(exponent_pd,1), cm, 'atlas', 'aparc', 'limits', [0.6, 1.2])
-plotBrain(regionDescriptions.aparc_aseg, mean(offset_pd,1), cm, 'atlas', 'aparc', 'limits', [-23, -19])
+clim_expo = [min(min(temp_exp_HC(:)), min(temp_exp_PD(:))), max(max(temp_exp_HC(:)), max(temp_exp_PD(:)))];
+clim_off = [min(min(temp_off_HC(:)), min(temp_off_PD(:))), max(max(temp_off_HC(:)), max(temp_off_PD(:)))];
 
 
-%% Create table to get all parameters in a single csv file
+%% Create table to get all source-averaged parameters in a single csv file
 
 % with headers:
 % Sub, Gp, mean exponent, mean offset
