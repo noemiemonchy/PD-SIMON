@@ -62,7 +62,7 @@ ggqqplot(data2, "averaged_exponent", ggtheme = theme_bw()) +
 # Calculate anova
 res.aov <- anova_test(
   data = data2, dv = averaged_exponent, wid = sub,
-  within = c(period, group)
+  between = group, within = period
 )
 get_anova_table(res.aov, correction = c("auto")) # auto applies correction if Mauchly test shows violation of sphericity
 # Posthoc
@@ -132,7 +132,7 @@ ggqqplot(data2, "averaged_offset", ggtheme = theme_bw()) +
 # Calculate anova
 res.aov <- anova_test(
   data = data2, dv = averaged_offset, wid = sub,
-  within = c(period, group)
+  between = group, within = period
 )
 get_anova_table(res.aov, correction = c("auto")) # auto applies correction if Mauchly test shows violation of sphericity
 # Posthoc
