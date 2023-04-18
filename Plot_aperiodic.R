@@ -2,29 +2,30 @@ library(tidyverse)
 library(ggpubr)
 library(see)
 library(ggbeeswarm)
+library(rstatix)
 
-## Plot n nodes of kept  after 1/f thresh
+## Plot ROI averaged exponent
 
-data_conn = as_tibble(read.table('graph_table_nodes_kept_1f_only.csv', sep = ",", header = TRUE))
-data_conn$frequencies = as.factor(data_conn$frequencies)
+data= as_tibble(read.table('sources_aperiodic_param.csv', sep = ",", header = TRUE))
 
-p <- data_conn %>%
-  mutate(frequencies = fct_relevel(frequencies, "delta", "theta", "alpha", "beta", "gamma")) %>%
-  ggplot(aes(x = frequencies, y = n_nodes_kept, fill = group))+
+exp <- data %>%
+  mutate(period = fct_relevel(period, "Rest", "Pre-stimulus", "Post-stimulus")) %>%
+  ggplot(aes(x = period, y = averaged_exponent, fill = group))+
   scale_fill_manual(values=c("#884da7", "#b67823")) +
-  #  geom_violin(alpha=0.9, position = position_dodge(width = .75),size=1,color=NA) +
-  geom_boxplot(notch = F,  outlier.size = -1, color="black",lwd=0.5, alpha = 0.7,show.legend = T)+
-  # geom_point( shape = 21,size=2, position = position_jitterdodge(), color="black",alpha=1)+
-  ggbeeswarm::geom_quasirandom(shape = 21,size=2, dodge.width = .75, color="black",alpha=.5,show.legend = F)+
+  geom_violin()+
+  geom_boxplot(notch = F,  outlier.size = -1, color="black",lwd=0.5, alpha = 0.7,show.legend = T, width = 0.15,
+               position = position_dodge(width = 0.9))+
+  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, position = position_dodge(width = 0.9))+
+  #ggbeeswarm::geom_quasirandom(shape = 21,size=2, dodge.width = .75, color="black",alpha=.5,show.legend = F)+
   theme_minimal()+
-  ylab(  c("Number of kept nodes after 1/f correction")  )  +
-  xlab(  c("Frequencies")  )  +
+  ylab(c("ROI-averaged exponent"))  +
+  xlab(c(""))+
   theme(#panel.border = element_rect(colour = "black", fill=NA, size=2),
     axis.line = element_line(colour = "black",size=1),
     axis.ticks = element_line(size=1,color="black"),
     axis.text = element_text(color="black"),
     axis.ticks.length=unit(0.2,"cm"),
-    legend.position = c(0.95, 0.85),
+    legend.position = c(0.95, 0.15),
     plot.title = element_text(size = 20))+
   font("xylab",size=15)+  
   font("xy",size=15)+ 
@@ -32,31 +33,67 @@ p <- data_conn %>%
   font("legend.text",size = 15)+
   guides(fill = guide_legend(override.aes = list(alpha = 1,color="black")))
 
-p
+
+# Stats
+data <- data %>%
+convert_as_factor(sub, period, group)
+
+# Descriptive stats
+data2 %>%
+  group_by(period, group) %>%
+  get_summary_stats(averaged_exponent, type = "mean_sd")
+# Fast plot
+bxp <- ggboxplot(
+  data2, x = "period", y = "averaged_exponent",
+  color = "group", palette = "jco"
+)
+bxp
+# Identify outliers
+data2 %>%
+  group_by(period, group) %>%
+  identify_outliers(averaged_exponent)
+# Normality check
+data2 %>%
+  group_by(period, group) %>%
+  shapiro_test(averaged_exponent)
+
+ggqqplot(data2, "averaged_exponent", ggtheme = theme_bw()) +
+  facet_grid(period ~ group, labeller = "label_both")
+# Calculate anova
+res.aov <- anova_test(
+  data = data2, dv = averaged_exponent, wid = sub,
+  within = c(period, group)
+)
+get_anova_table(res.aov, correction = c("auto")) # auto applies correction if Mauchly test shows violation of sphericity
+# Posthoc
+pwc <- data2 %>%
+    pairwise_t_test(
+    averaged_exponent ~ period, paired = TRUE,
+    p.adjust.method = "bonferroni"
+  )
+pwc
 
 
-## Plot percentage of kept connections after 1/f thresh
+## Plot ROI averaged offset
 
-data_conn = as_tibble(read.table('graph_table_connexions_kept_1f_only.csv', sep = ",", header = TRUE))
-data_conn$frequencies = as.factor(data_conn$frequencies)
-
-p <- data_conn %>%
-  mutate(frequencies = fct_relevel(frequencies, "delta", "theta", "alpha", "beta", "gamma")) %>%
-  ggplot(aes(x = frequencies, y = pct_cx_kept_only1f, fill = group))+
+off <- data %>%
+  mutate(period = fct_relevel(period, "Rest", "Pre-stimulus", "Post-stimulus")) %>%
+  ggplot(aes(x = period, y = averaged_offset, fill = group))+
   scale_fill_manual(values=c("#884da7", "#b67823")) +
-  #  geom_violin(alpha=0.9, position = position_dodge(width = .75),size=1,color=NA) +
-  geom_boxplot(notch = F,  outlier.size = -1, color="black",lwd=0.5, alpha = 0.7,show.legend = T)+
-  # geom_point( shape = 21,size=2, position = position_jitterdodge(), color="black",alpha=1)+
-  ggbeeswarm::geom_quasirandom(shape = 21,size=2, dodge.width = .75, color="black",alpha=.5,show.legend = F)+
+  geom_violin()+
+  geom_boxplot(notch = F,  outlier.size = -1, color="black",lwd=0.5, alpha = 0.7,show.legend = T, width = 0.15,
+               position = position_dodge(width = 0.9))+
+  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, position = position_dodge(width = 0.9))+
+  #ggbeeswarm::geom_quasirandom(shape = 21,size=2, dodge.width = .75, color="black",alpha=.5,show.legend = F)+
   theme_minimal()+
-  ylab(  c("% of kept connections 1/f only")  )  +
-  xlab(  c("Frequencies")  )  +
+  ylab(c("ROI-averaged offset"))  +
+  xlab(c(""))+
   theme(#panel.border = element_rect(colour = "black", fill=NA, size=2),
     axis.line = element_line(colour = "black",size=1),
     axis.ticks = element_line(size=1,color="black"),
     axis.text = element_text(color="black"),
     axis.ticks.length=unit(0.2,"cm"),
-    legend.position = c(0.95, 0.85),
+    legend.position = c(0.95, 0.15),
     plot.title = element_text(size = 20))+
   font("xylab",size=15)+  
   font("xy",size=15)+ 
@@ -64,137 +101,46 @@ p <- data_conn %>%
   font("legend.text",size = 15)+
   guides(fill = guide_legend(override.aes = list(alpha = 1,color="black")))
 
-p
 
 
-## Plot percentage of kept connections after 5% and 1/f thresh
+# Stats
 
-data_conn = as_tibble(read.table('graph_table_connexions_kept_5pct_and_1f.csv', sep = ",", header = TRUE))
-data_conn$frequencies = as.factor(data_conn$frequencies)
-data_conn = data_conn[which(data_conn$fc_meth == "wpli"),]
+# Descriptive stats
+data2 %>%
+  group_by(period, group) %>%
+  get_summary_stats(averaged_offset, type = "mean_sd")
+# Fast plot
+bxp <- ggboxplot(
+  data2, x = "period", y = "averaged_offset",
+  color = "group", palette = "jco"
+)
+bxp
 
+# Identify outliers
+data2 %>%
+  group_by(period, group) %>%
+  identify_outliers(averaged_offset)
 
-p2 <- data_conn %>%
-  mutate(frequencies = fct_relevel(frequencies, "delta", "theta", "alpha", "beta", "gamma")) %>%
-  ggplot(aes(x = frequencies, y = pct_cx_kept, fill = group))+
-  scale_fill_manual(values=c("#884da7", "#b67823")) +
-#  geom_violin(alpha=0.9, position = position_dodge(width = .75),size=1,color=NA) +
-  geom_boxplot(notch = F,  outlier.size = -1, color="black",lwd=0.5, alpha = 0.7,show.legend = F)+
-  # geom_point( shape = 21,size=2, position = position_jitterdodge(), color="black",alpha=1)+
-  ggbeeswarm::geom_quasirandom(shape = 21,size=2, dodge.width = .75, color="black",alpha=.5,show.legend = F)+
-  theme_minimal()+
-  ylab(  c("% of kept connections")  )  +
-  xlab(  c("Frequencies")  )  +
-  theme(#panel.border = element_rect(colour = "black", fill=NA, size=2),
-    axis.line = element_line(colour = "black",size=1),
-    axis.ticks = element_line(size=1,color="black"),
-    axis.text = element_text(color="black"),
-    axis.ticks.length=unit(0.2,"cm"),
-    legend.position = c(0.95, 0.85),
-    plot.title = element_text(size = 20))+
-  font("xylab",size=15)+  
-  font("xy",size=15)+ 
-  font("xy.text", size = 15) +  
-  font("legend.text",size = 15)+
-  guides(fill = guide_legend(override.aes = list(alpha = 1,color="black")))+
-  ggtitle("wPLI")
+# Normality check
+data2 %>%
+  group_by(period, group) %>%
+  shapiro_test(averaged_offset)
 
-ggarrange(p1, p2, p3, p4, p5,
-          ncol = 2, nrow = 3)
+ggqqplot(data2, "averaged_offset", ggtheme = theme_bw()) +
+  facet_grid(period ~ group, labeller = "label_both")
 
+# Calculate anova
+res.aov <- anova_test(
+  data = data2, dv = averaged_offset, wid = sub,
+  within = c(period, group)
+)
+get_anova_table(res.aov, correction = c("auto")) # auto applies correction if Mauchly test shows violation of sphericity
+# Posthoc
+pwc <- data2 %>%
+  group_by(group)%>%
+  pairwise_t_test(
+    averaged_offset ~ period, paired = TRUE,
+    p.adjust.method = "bonferroni"
+  )
+pwc
 
-## Plot graph metrics
-
-data = as_tibble(read.table('graph_table.csv', sep = ",", header = TRUE))
-data$frequencies = as.factor(data$frequencies)
-data = data[which(data$fc_meth == "oenv"),]
-data = data[which(data$thresh_met == "node_1f"),]
-
-
-
-p2 <- data %>%
-  
-  mutate(frequencies = fct_relevel(frequencies, "delta", "theta", "alpha", "beta", "gamma")) %>%
-  ggplot(aes(x = frequencies, y = mean_betweenness, fill = group))+
-  scale_fill_manual(values=c("#884da7", "#b67823")) +
-  #  geom_violin(alpha=0.9, position = position_dodge(width = .75),size=1,color=NA) +
-  geom_boxplot(notch = F,  outlier.size = -1, color="black",lwd=0.5, alpha = 0.7,show.legend = F)+
-  # geom_point( shape = 21,size=2, position = position_jitterdodge(), color="black",alpha=1)+
-  ggbeeswarm::geom_quasirandom(shape = 21,size=2, dodge.width = .75, color="black",alpha=.5,show.legend = F)+
-  theme_minimal()+
-  ylab(  c("Mean betweenness centrality")  )  +
-  xlab(  c("Frequencies")  )  +
-  theme(#panel.border = element_rect(colour = "black", fill=NA, size=2),
-    axis.line = element_line(colour = "black",size=1),
-    axis.ticks = element_line(size=1,color="black"),
-    axis.text = element_text(color="black"),
-    axis.ticks.length=unit(0.2,"cm"),
-    legend.position = c(0.95, 1),
-    plot.title = element_text(size = 20))+
-  font("xylab",size=15)+  
-  font("xy",size=15)+ 
-  font("xy.text", size = 15) +  
-  font("legend.text",size = 15)+
-  guides(fill = guide_legend(override.aes = list(alpha = 1,color="black")))+
-  ggtitle("5% proportional + 1/f")+
-  ylim(0, 175)
-
-ggarrange(p1, p2,
-          ncol = 2, nrow = 1)
-
-
-## Plot degree distribution
-
-degree_data = as_tibble(read.table('graph_table_degree_distribution.csv', sep = ",", header = TRUE))
-degree_data <- degree_data %>% 
-  filter(!(group == 'PD' & sub==8))
-
-  deg_beta <- degree_data %>% 
-  filter(frequencies == 'beta', fc_meth == 'oenv', thresh_met == 'node')
-  p = ggplot(deg_beta, aes(x=degree, color=group)) +
-    stat_ecdf(geom = "step", pad = F)+
-    theme_minimal()+
-    ylab(  c("Empirical cumulative distribution")  )  +
-    xlab(  c("Beta orthogonalized aec degree")  )  +
-    theme(panel.border = element_rect(colour = "black", fill=NA, size=2),
-          axis.line = element_line(colour = "black",size=1),
-          axis.ticks = element_line(size=1,color="black"),
-          axis.text = element_text(color="black"),
-          axis.ticks.length=unit(0.2,"cm"),
-          legend.position = c(0.875, 0.8),
-          plot.title = element_text(size = 20))+
-    font("xylab",size=15)+  
-    font("xy",size=15)+ 
-    font("xy.text", size = 15) +  
-    font("legend.text",size = 15)+
-    guides(fill = guide_legend(override.aes = list(beta = 1,color="black")))+
-    ggtitle("5% thresholding")+
-    scale_color_manual(values=c("#884da7", "#b67823"))+
-    ylim(0, 1)
-  
-  
-  deg_beta <- degree_data %>% 
-    filter(frequencies == 'beta', fc_meth == 'oenv', thresh_met == 'node_1f')
-  p2 = ggplot(deg_beta, aes(x=degree, color=group)) +
-    stat_ecdf(geom = "step",pad = F, show.legend = F)+
-    theme_minimal()+
-    ylab(  c("Empirical cumulative distribution")  )  +
-    xlab(  c("Beta orthogonalized aec degree")  )  +
-    theme(panel.border = element_rect(colour = "black", fill=NA, size=2),
-          axis.line = element_line(colour = "black",size=1),
-          axis.ticks = element_line(size=1,color="black"),
-          axis.text = element_text(color="black"),
-          axis.ticks.length=unit(0.2,"cm"),
-          legend.position = c(0.875, 0.9),
-          plot.title = element_text(size = 20))+
-    font("xylab",size=15)+  
-    font("xy",size=15)+ 
-    font("xy.text", size = 15) +  
-    font("legend.text",size = 15)+
-    guides(fill = guide_legend(override.aes = list(beta = 1,color="black")))+
-    ggtitle("5% thresholding + 1/f")+
-    scale_color_manual(values=c("#884da7", "#b67823"))+
-    ylim(0, 1)
-  
-  ggarrange(p, p2,
-            ncol = 2, nrow = 1)
