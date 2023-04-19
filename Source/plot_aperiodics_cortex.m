@@ -155,7 +155,8 @@ writetable(graph_t, ['sources_aperiodic_param.csv']);
 
 
 
-%% Create table to get all ROI, group and subject-specific parameters in a single csv file
+%% Create table to get all ROI, group and subject-specific parameters 
+%  in a single csv file, only for the 3 periods
 
 % with headers:
 % Sub, Gp, period, ROI, exponent, offset
@@ -203,6 +204,53 @@ graph_t = rmmissing(t);
 writetable(graph_t, ['sources_aperiodic_param_all.csv']);
 
 
+%% Create table to get all ROI, group and subject-specific parameters 
+%  in a single csv file, only for post stimulus and according to congruence
+
+% with headers:
+% Sub, Gp, congruence, ROI, exponent, offset
+
+group = {'HC', 'PD'};
+
+i = 1; % initiate counter to fill rows
+
+varnames = {'sub', 'group','congruence','ROI','exponent', 'offset'};
+vartypes = {'double', 'string', 'string','double'...
+    'double','double'};
+
+t = table('Size', [10000, 6], 'VariableTypes', vartypes, 'VariableNames', varnames);
+condition = {'C', 'IC'};
+% HC
+for subi = 1 : size(HC, 1)
+    for condi = 1:2
+        for ROI = 1:68
+            sub = subi ;
+            gp = 'HC';
+            congruence = condition{condi};
+            exponent = HCtask(subi,ROI, condi,1);
+            offset = HCtask(subi,ROI, condi,2);
+            t(i,:) = {sub, gp, congruence, ROI, exponent, offset};
+            i = i+1;
+        end
+    end
+end
+
+% PD
+for subi = 1 : size(PD, 1)
+    for condi = 1:2
+        for ROI = 1:68
+            sub = subi ;
+            gp = 'PD';
+            congruence = condition{condi};
+            exponent = PDtask(subi,ROI, condi,1);
+            offset = PDtask(subi,ROI, condi,2);
+            t(i,:) = {sub, gp, congruence, ROI, exponent, offset};
+            i = i+1;
+        end
+    end
+end
+graph_t = rmmissing(t);
+writetable(graph_t, ['sources_aperiodic_param_post_task.csv']);
 
 %% Stats on region-specific group changes in exponent and offset
 results = zeros(68,2); % first col is exponent, second is offset
