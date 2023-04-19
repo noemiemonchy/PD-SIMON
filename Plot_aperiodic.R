@@ -181,11 +181,13 @@ for (roi in 1:68){
 
 # apply FDR correction on results
 expo_results_fdr = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(expo_results_fdr) = c('p_group','p_period','p_inter')
 
 for (pi in 1:3){
 expo_results_fdr[,pi] = p.adjust(expo_results[,pi], method = 'fdr', 
                                  n = length(expo_results[,pi]))
 }
+write.csv(expo_results_fdr, "expo_results_fdr.csv", row.names=TRUE)
 
 
 # Offset
@@ -218,12 +220,13 @@ for (roi in 1:68){
 
 # apply FDR correction on results
 offset_results_fdr = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(offset_results_fdr) = c('p_group','p_period','p_inter')
 
 for (pi in 1:3){
   offset_results_fdr[,pi] = p.adjust(offset_results[,pi], method = 'fdr', 
                                    n = length(offset_results[,pi]))
 }
-
+write.csv(offset_results_fdr, "offset_results_fdr.csv", row.names=TRUE)
 
 ## Now the same analyses but only post stimulus with a group x congruence design
 
@@ -358,6 +361,81 @@ res.aov <- anova_test(
 )
 get_anova_table(res.aov, correction = c("auto")) # auto applies correction if Mauchly test shows violation of sphericity
 
+## ROI-specific stats with FDR correction
 
+# Exponent
+
+# create array to store results
+# create matrix with 3 columns (p group, p period, p interaction) and 68 rows
+expo_results = matrix(nrow=68, ncol=3, byrow=TRUE)
+
+# specify the column names and row names of matrix
+colnames(expo_results) = c('p_group','p_congruence','p_inter')
+
+# # assign to table
+# expo_results = as.table(expo_results)
+
+# Do a two way repeated measure anova (group x period) on all ROIs
+
+for (roi in 1:68){
+  data2= data %>%
+    filter(ROI == roi)
+  
+  res.aov <- anova_test(data2,
+                        dv = exponent, wid = sub,
+                        between = group, within = congruence
+  )
+  expo_results[roi,1] = res.aov$p[1]
+  expo_results[roi,2] = res.aov$p[2]
+  expo_results[roi,3] = res.aov$p[3]
+  
+}
+
+# apply FDR correction on results
+expo_results_fdr = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(expo_results_fdr) = c('p_group','p_congruence','p_inter')
+
+for (pi in 1:3){
+  expo_results_fdr[,pi] = p.adjust(expo_results[,pi], method = 'fdr', 
+                                   n = length(expo_results[,pi]))
+}
+
+write.csv(expo_results_fdr, "expo_results_task_fdr.csv", row.names=TRUE)
+# Offset
+
+# create array to store results
+# create matrix with 3 columns (p group, p period, p interaction) and 68 rows
+offset_results = matrix(nrow=68, ncol=3, byrow=TRUE)
+
+# specify the column names and row names of matrix
+colnames(offset_results) = c('p_group','p_congruence','p_inter')
+
+
+# Do a two way repeated measure anova (group x period) on all ROIs
+
+for (roi in 1:68){
+  data2= data %>%
+    filter(ROI == roi)
+  
+  res.aov <- anova_test(data2,
+                        dv = offset, wid = sub,
+                        between = group, within = congruence
+  )
+  offset_results[roi,1] = res.aov$p[1]
+  offset_results[roi,2] = res.aov$p[2]
+  offset_results[roi,3] = res.aov$p[3]
+  
+}
+
+# apply FDR correction on results
+offset_results_fdr = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(offset_results_fdr) = c('p_group','p_congruence','p_inter')
+
+for (pi in 1:3){
+  offset_results_fdr[,pi] = p.adjust(offset_results[,pi], method = 'fdr', 
+                                   n = length(offset_results[,pi]))
+}
+
+write.csv(offset_results_fdr, "offset_results_task_fdr.csv", row.names=TRUE)
 
 
