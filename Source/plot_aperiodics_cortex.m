@@ -155,8 +155,52 @@ writetable(graph_t, ['sources_aperiodic_param.csv']);
 
 
 
+%% Create table to get all ROI, group and subject-specific parameters in a single csv file
 
+% with headers:
+% Sub, Gp, period, ROI, exponent, offset
 
+group = {'HC', 'PD'};
+
+i = 1; % initiate counter to fill rows
+
+varnames = {'sub', 'group','period','ROI','exponent', 'offset'};
+vartypes = {'double', 'string', 'string','double'...
+    'double','double'};
+
+t = table('Size', [10000, 6], 'VariableTypes', vartypes, 'VariableNames', varnames);
+condition = {'Rest', 'Pre-stimulus', 'Post-stimulus'};
+% HC
+for subi = 1 : size(HC, 1)
+    for condi = 1:3
+        for ROI = 1:68
+            sub = subi ;
+            gp = 'HC';
+            period = condition{condi};
+            exponent = HC(subi,ROI, condi,1);
+            offset = HC(subi,ROI, condi,2);
+            t(i,:) = {sub, gp, period, ROI, exponent, offset};
+            i = i+1;
+        end
+    end
+end
+
+% PD
+for subi = 1 : size(PD, 1)
+    for condi = 1:3
+        for ROI = 1:68
+            sub = subi ;
+            gp = 'PD';
+            period = condition{condi};
+            exponent = PD(subi,ROI, condi,1);
+            offset = PD(subi,ROI, condi,2);
+            t(i,:) = {sub, gp, period, ROI, exponent, offset};
+            i = i+1;
+        end
+    end
+end
+graph_t = rmmissing(t);
+writetable(graph_t, ['sources_aperiodic_param_all.csv']);
 
 
 

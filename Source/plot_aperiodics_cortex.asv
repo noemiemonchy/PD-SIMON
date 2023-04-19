@@ -118,39 +118,88 @@ group = {'HC', 'PD'};
 
 i = 1; % initiate counter to fill rows
 
-varnames = {'sub', 'group','averaged_exponent', 'averaged_offset'};
-vartypes = {'double', 'string',...
+varnames = {'sub', 'group','period','averaged_exponent', 'averaged_offset'};
+vartypes = {'double', 'string', 'string',...
     'double','double'};
 
-t = table('Size', [10000, 4], 'VariableTypes', vartypes, 'VariableNames', varnames);
+t = table('Size', [10000, 5], 'VariableTypes', vartypes, 'VariableNames', varnames);
+condition = {'Rest', 'Pre-stimulus', 'Post-stimulus'};
 % HC
-for subi = 1 : size(exponent_hc, 1)
+for subi = 1 : size(HC, 1)
     for condi = 1:3
             sub = subi ;
             gp = 'HC';
-            averaged_exponent = squeeze(mean(HC(:,:, condi,1), 2));
-            averaged_offset = squeeze(mean(HC(:,:, condi,2), 2));
-            t(i,:) = {sub, gp, averaged_exponent, averaged_offset};
+            period = condition{condi};
+            averaged_exponent = squeeze(mean(HC(subi,:, condi,1), 2));
+            averaged_offset = squeeze(mean(HC(subi,:, condi,2), 2));
+            t(i,:) = {sub, gp, period, averaged_exponent, averaged_offset};
             i = i+1;
     end
 end
 
 % PD
-for subi = 1 : size(exponent_pd, 1)
+for subi = 1 : size(PD, 1)
+    for condi = 1:3
             sub = subi ;
             gp = 'PD';
-            averaged_exponent = mean(exponent_pd(subi,:),2);
-            averaged_offset = mean(offset_pd(subi,:),2);
-            t(i,:) = {sub, gp, averaged_exponent, averaged_offset};
+            period = condition{condi};
+            averaged_exponent = squeeze(mean(PD(subi,:, condi,1), 2));
+            averaged_offset = squeeze(mean(PD(subi,:, condi,2), 2));
+            t(i,:) = {sub, gp, period, averaged_exponent, averaged_offset};
             i = i+1;
+    end
 end
 
-outpath = 'Graph_metrics_results/';
 graph_t = rmmissing(t);
-writetable(graph_t, [outpath, '/aperiodic_param.csv']);
+writetable(graph_t, ['sources_aperiodic_param.csv']);
 
 
 
+%% Create table to get all ROI, group and subject-specific parameters in a single csv file
+
+% with headers:
+% Sub, Gp, period, ROI, exponent, offset
+
+group = {'HC', 'PD'};
+
+i = 1; % initiate counter to fill rows
+
+varnames = {'sub', 'group','period','ROI','averaged_exponent', 'averaged_offset'};
+vartypes = {'double', 'string', 'string','double'...
+    'double','double'};
+
+t = table('Size', [10000, 6], 'VariableTypes', vartypes, 'VariableNames', varnames);
+condition = {'Rest', 'Pre-stimulus', 'Post-stimulus'};
+% HC
+for subi = 1 : size(HC, 1)
+    for condi = 1:3
+        for ROI = 1:68
+            sub = subi ;
+            gp = 'HC';
+            period = condition{condi};
+            exponent = HC(subi,ROI, condi,1);
+            offset = HC(subi,ROI, condi,2);
+            t(i,:) = {sub, gp, period, ROI, exponent, offset};
+            i = i+1;
+        end
+    end
+end
+
+% PD
+for subi = 1 : size(PD, 1)
+    for condi = 1:3
+            sub = subi ;
+            gp = 'PD';
+            period = condition{condi};
+            averaged_exponent = squeeze(mean(PD(subi,:, condi,1), 2));
+            averaged_offset = squeeze(mean(PD(subi,:, condi,2), 2));
+            t(i,:) = {sub, gp, period, averaged_exponent, averaged_offset};
+            i = i+1;
+    end
+end
+
+graph_t = rmmissing(t);
+writetable(graph_t, ['sources_aperiodic_param.csv']);
 
 
 

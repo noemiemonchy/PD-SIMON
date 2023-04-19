@@ -135,12 +135,95 @@ res.aov <- anova_test(
   between = group, within = period
 )
 get_anova_table(res.aov, correction = c("auto")) # auto applies correction if Mauchly test shows violation of sphericity
+
 # Posthoc
 pwc <- data2 %>%
-  group_by(group)%>%
   pairwise_t_test(
     averaged_offset ~ period, paired = TRUE,
     p.adjust.method = "bonferroni"
   )
 pwc
+
+
+
+## ROI-specific stats with FDR correction
+
+
+data = as_tibble(read.table('sources_aperiodic_param_all.csv', sep = ",", header = TRUE))
+
+# Exponent
+
+# create array to store results
+# create matrix with 3 columns (p group, p period, p interaction) and 68 rows
+expo_results = matrix(nrow=68, ncol=3, byrow=TRUE)
+
+# specify the column names and row names of matrix
+colnames(expo_results) = c('p_group','p_period','p_inter')
+
+# # assign to table
+# expo_results = as.table(expo_results)
+
+# Do a two way repeated measure anova (group x period) on all ROIs
+
+for (roi in 1:68){
+  data2= data %>%
+    filter(ROI == roi)
+  
+    res.aov <- anova_test(data2,
+      dv = exponent, wid = sub,
+      between = group, within = period
+    )
+    expo_results[roi,1] = res.aov$ANOVA$p[1]
+    expo_results[roi,2] = res.aov$ANOVA$p[2]
+    expo_results[roi,3] = res.aov$ANOVA$p[3]
+    
+    }
+
+# apply FDR correction on results
+expo_results_fdr = matrix(nrow=68, ncol=3, byrow=TRUE)
+
+for (pi in 1:3){
+expo_results_fdr[,pi] = p.adjust(expo_results[,pi], method = 'fdr', 
+                                 n = length(expo_results[,pi]))
+}
+
+
+# Offset
+
+# create array to store results
+# create matrix with 3 columns (p group, p period, p interaction) and 68 rows
+offset_results = matrix(nrow=68, ncol=3, byrow=TRUE)
+
+# specify the column names and row names of matrix
+colnames(offset_results) = c('p_group','p_period','p_inter')
+
+# # assign to table
+# offset_results = as.table(offset_results)
+
+# Do a two way repeated measure anova (group x period) on all ROIs
+
+for (roi in 1:68){
+  data2= data %>%
+    filter(ROI == roi)
+  
+  res.aov <- anova_test(data2,
+                        dv = offset, wid = sub,
+                        between = group, within = period
+  )
+  offset_results[roi,1] = res.aov$ANOVA$p[1]
+  offset_results[roi,2] = res.aov$ANOVA$p[2]
+  offset_results[roi,3] = res.aov$ANOVA$p[3]
+  
+}
+
+# apply FDR correction on results
+offset_results_fdr = matrix(nrow=68, ncol=3, byrow=TRUE)
+
+for (pi in 1:3){
+  offset_results_fdr[,pi] = p.adjust(offset_results[,pi], method = 'fdr', 
+                                   n = length(offset_results[,pi]))
+}
+
+
+
 
