@@ -4,23 +4,28 @@ library(see)
 library(ggbeeswarm)
 library(rstatix)
 
-## Plot ROI averaged exponent
+# ROI-averaged exponent - period -----------------------------------------------
 
-data= as_tibble(read.table('sources_aperiodic_param.csv', sep = ",", header = TRUE))
+# Plot
+
+data= as_tibble(read.table('sources_aperiodic_param.csv', sep = ",", 
+                           header = TRUE))
 
 exp <- data %>%
-  mutate(period = fct_relevel(period, "Rest", "Pre-stimulus", "Post-stimulus")) %>%
+  mutate(period = fct_relevel(period, "Rest", 
+                              "Pre-stimulus", "Post-stimulus")) %>%
   ggplot(aes(x = period, y = averaged_exponent, fill = group))+
   scale_fill_manual(values=c("#884da7", "#b67823")) +
   geom_violin()+
-  geom_boxplot(notch = F,  outlier.size = -1, color="black",lwd=0.5, alpha = 0.7,show.legend = T, width = 0.15,
+  geom_boxplot(notch = F,  outlier.size = -1, color="black", 
+               lwd=0.5, alpha = 0.7,show.legend = T, width = 0.15,
                position = position_dodge(width = 0.9))+
-  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, position = position_dodge(width = 0.9))+
-  #ggbeeswarm::geom_quasirandom(shape = 21,size=2, dodge.width = .75, color="black",alpha=.5,show.legend = F)+
+  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, 
+               position = position_dodge(width = 0.9))+
   theme_minimal()+
   ylab(c("ROI-averaged exponent"))  +
   xlab(c(""))+
-  theme(#panel.border = element_rect(colour = "black", fill=NA, size=2),
+  theme(
     axis.line = element_line(colour = "black",size=1),
     axis.ticks = element_line(size=1,color="black"),
     axis.text = element_text(color="black"),
@@ -64,7 +69,9 @@ res.aov <- anova_test(
   data = data2, dv = averaged_exponent, wid = sub,
   between = group, within = period
 )
-get_anova_table(res.aov, correction = c("auto")) # auto applies correction if Mauchly test shows violation of sphericity
+get_anova_table(res.aov, correction = c("auto")) # auto applies 
+# correction if Mauchly test shows violation of sphericity
+
 # Posthoc
 pwc <- data2 %>%
     pairwise_t_test(
@@ -74,17 +81,22 @@ pwc <- data2 %>%
 pwc
 
 
-## Plot ROI averaged offset
+# ROI-averaged offset - period -------------------------------------------------
+
+
+# Plot
 
 off <- data %>%
-  mutate(period = fct_relevel(period, "Rest", "Pre-stimulus", "Post-stimulus")) %>%
+  mutate(period = fct_relevel(period, "Rest", 
+                              "Pre-stimulus", "Post-stimulus")) %>%
   ggplot(aes(x = period, y = averaged_offset, fill = group))+
   scale_fill_manual(values=c("#884da7", "#b67823")) +
   geom_violin()+
-  geom_boxplot(notch = F,  outlier.size = -1, color="black",lwd=0.5, alpha = 0.7,show.legend = T, width = 0.15,
+  geom_boxplot(notch = F,  outlier.size = -1, color="black",lwd=0.5, 
+               alpha = 0.7,show.legend = T, width = 0.15,
                position = position_dodge(width = 0.9))+
-  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, position = position_dodge(width = 0.9))+
-  #ggbeeswarm::geom_quasirandom(shape = 21,size=2, dodge.width = .75, color="black",alpha=.5,show.legend = F)+
+  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, 
+               position = position_dodge(width = 0.9))+
   theme_minimal()+
   ylab(c("ROI-averaged offset"))  +
   xlab(c(""))+
@@ -100,7 +112,6 @@ off <- data %>%
   font("xy.text", size = 15) +  
   font("legend.text",size = 15)+
   guides(fill = guide_legend(override.aes = list(alpha = 1,color="black")))
-
 
 
 # Stats
@@ -134,7 +145,8 @@ res.aov <- anova_test(
   data = data2, dv = averaged_offset, wid = sub,
   between = group, within = period
 )
-get_anova_table(res.aov, correction = c("auto")) # auto applies correction if Mauchly test shows violation of sphericity
+get_anova_table(res.aov, correction = c("auto")) # auto applies 
+# correction if Mauchly test shows violation of sphericity
 
 # Posthoc
 pwc <- data2 %>%
@@ -146,10 +158,12 @@ pwc
 
 
 
-## ROI-specific stats with FDR correction
+# ROI-specific stats with FDR correction - period ------------------------------
 
 
-data = as_tibble(read.table('sources_aperiodic_param_all.csv', sep = ",", header = TRUE))
+
+data = as_tibble(read.table('sources_aperiodic_param_all.csv', 
+                            sep = ",", header = TRUE))
 
 # Exponent
 
@@ -228,21 +242,23 @@ for (pi in 1:3){
 }
 write.csv(offset_results_fdr, "offset_results_fdr.csv", row.names=TRUE)
 
-## Now the same analyses but only post stimulus with a group x congruence design
+# ROI-averaged exponent - task (gp x cong) -------------------------------------
 
-data = as_tibble(read.table('sources_aperiodic_param_post_task.csv', sep = ",", header = TRUE))
+data = as_tibble(read.table('sources_aperiodic_param_post_task.csv', 
+                            sep = ",", header = TRUE))
 
-# Exponent
+# Plot
 exp <- data %>%
   group_by(sub, group, congruence) %>% 
   summarize(avg.exp = mean(exponent)) %>%
   ggplot(aes(x = congruence, y = avg.exp, fill = group))+
   scale_fill_manual(values=c("#884da7", "#b67823")) +
   geom_violin()+
-  geom_boxplot(notch = F,  outlier.size = -1, color="black",lwd=0.5, alpha = 0.7,show.legend = T, width = 0.15,
+  geom_boxplot(notch = F,  outlier.size = -1, color="black", 
+               lwd=0.5, alpha = 0.7,show.legend = T, width = 0.15,
                position = position_dodge(width = 0.9))+
-  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, position = position_dodge(width = 0.9))+
-  #ggbeeswarm::geom_quasirandom(shape = 21,size=2, dodge.width = .75, color="black",alpha=.5,show.legend = F)+
+  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, 
+               position = position_dodge(width = 0.9))+
   theme_minimal()+
   ylab(c("ROI-averaged exponent"))  +
   xlab(c(""))+
@@ -293,22 +309,25 @@ res.aov <- anova_test(
   data = data2, dv = averaged_exponent, wid = sub,
   between = group, within = congruence
 )
-get_anova_table(res.aov, correction = c("auto")) # auto applies correction if Mauchly test shows violation of sphericity
+get_anova_table(res.aov, correction = c("auto")) # auto applies 
+# correction if Mauchly test shows violation of sphericity
 
 
 
-# Offset
+# ROI-averaged offset - task (gp x cong) ---------------------------------------
 
+# Plot
 off <- data %>%
   group_by(sub, group, congruence) %>% 
   summarize(avg.off = mean(offset)) %>%
   ggplot(aes(x = congruence, y = avg.off, fill = group))+
   scale_fill_manual(values=c("#884da7", "#b67823")) +
   geom_violin()+
-  geom_boxplot(notch = F,  outlier.size = -1, color="black",lwd=0.5, alpha = 0.7,show.legend = T, width = 0.15,
+  geom_boxplot(notch = F,  outlier.size = -1, color="black",lwd=0.5, 
+               alpha = 0.7,show.legend = T, width = 0.15,
                position = position_dodge(width = 0.9))+
-  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, position = position_dodge(width = 0.9))+
-  #ggbeeswarm::geom_quasirandom(shape = 21,size=2, dodge.width = .75, color="black",alpha=.5,show.legend = F)+
+  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, 
+               position = position_dodge(width = 0.9))+
   theme_minimal()+
   ylab(c("ROI-averaged offset"))  +
   xlab(c(""))+
@@ -359,11 +378,11 @@ res.aov <- anova_test(
   data = data2, dv = averaged_offset, wid = sub,
   between = group, within = congruence
 )
-get_anova_table(res.aov, correction = c("auto")) # auto applies correction if Mauchly test shows violation of sphericity
+get_anova_table(res.aov, correction = c("auto")) # auto applies 
+# correction if Mauchly test shows violation of sphericity
 
-## ROI-specific stats with FDR correction
 
-# Exponent
+# ROI-specific exponent - task (gp x cong) -------------------------------------
 
 # create array to store results
 # create matrix with 3 columns (p group, p period, p interaction) and 68 rows
@@ -401,7 +420,9 @@ for (pi in 1:3){
 }
 
 write.csv(expo_results_fdr, "expo_results_task_fdr.csv", row.names=TRUE)
-# Offset
+
+# ROI-specific offset - task (gp x cong) ---------------------------------------
+
 
 # create array to store results
 # create matrix with 3 columns (p group, p period, p interaction) and 68 rows
