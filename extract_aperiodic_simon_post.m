@@ -119,7 +119,7 @@ end
 
 % OFFSET
 
-offpostpd = zeros(size(length(specpo_pd.specparam_post_PD),2),2,199)
+offpostpd = zeros(size(length(specpo_pd.specparam_post_PD),2),2,199);
 for subi = 1:length(specpo_pd.specparam_post_PD)
     for eleci = 1:199
         offpostpd(subi,1,eleci) = specpo_pd.specparam_post_PD(subi).c.data(eleci).aperiodic_params(1);
@@ -156,7 +156,7 @@ offpostpd_m = mean(offpostpd,2);
 offpostpd_mm = squeeze(mean(offpostpd_m,1));
 
 forlims = cat(1, offposthc_mm, offpostpd_mm);
-clim = [min(forlims), max(forlims)];
+clim = [-12.314, -11.002];
 
 offset_hc_fig = figure
 topoplot(squeeze(offposthc_mm),chanlocs, 'electrodes', 'off', ...
@@ -168,7 +168,7 @@ set(gcf,'Position',[100 100 300 300])
 colorbar
 
 offset_pd_fig = figure
-topoplot(mean(offpostpd_mm, 2),chanlocs, 'electrodes', 'off', ...
+topoplot(squeeze(offpostpd_mm),chanlocs, 'electrodes', 'off', ...
     'gridscale', 500)
 set(gca, 'clim', clim);
 colormap(parula)
@@ -179,11 +179,18 @@ colorbar
 
 % exponent
 %  get limits from both datasets
-forlims = cat(1, mean(expoposthc, 2), mean(expopostpd, 2));
-clim = [min(forlims), max(forlims)];
+
+expoposthc_m = mean(expoposthc,2);
+expoposthc_mm = squeeze(mean(expoposthc_m,1));
+
+expopostpd_m = mean(expopostpd,2);
+expopostpd_mm = squeeze(mean(expopostpd_m,1));
+
+forlims = cat(1, expoposthc_mm, expopostpd_mm);
+clim = [0.422, 1.2197];
 
 exponent_hc_fig = figure
-topoplot(mean(expoposthc, 2),chanlocs, 'electrodes', 'off', ...
+topoplot(squeeze(expoposthc_mm),chanlocs, 'electrodes', 'off', ...
     'gridscale', 500)
 set(gca, 'clim', clim);
 title(['Exponent HC'])
@@ -192,7 +199,7 @@ set(gcf,'Position',[100 100 300 300])
 colorbar
 
 exponent_pd_fig = figure
-topoplot(mean(expopostpd, 2),chanlocs, 'electrodes', 'off', ...
+topoplot(squeeze(expopostpd_mm),chanlocs, 'electrodes', 'off', ...
     'gridscale', 500)
 set(gca, 'clim', clim);
 title(['Exponent PD'])
@@ -200,4 +207,49 @@ colormap(parula)
 set(gcf,'Position',[100 100 300 300])
 colorbar
 
+%% TABLEAUX VIOLIN PLOTS
+offposthc_v = mean(offposthc,3);
+offpostpd_v = mean(offpostpd,3);
+
+csvwrite("offsetpost_hc.csv",offposthc_v);
+csvwrite("offsetpost_pd.csv",offpostpd_v);
+
+expoposthc_v = mean(expoposthc,3);
+expopostpd_v = mean(expopostpd,3);
+
+csvwrite("expopost_hc.csv",expoposthc_v);
+csvwrite("expopost_pd.csv",expopostpd_v);
+
+
+%% EXTRACTION DONNÉES PÉRIODIQUES  
+
+% en regardant au niveau du set d'electrodes midfrontales 
+
+elec_names = {'Fz', 'FCz', 'Cz', 'F1h', 'F2h', 'FC1', 'FC2', 'FCC1h', 'FCC2h','F1', 'F2', 'FFFC1', 'FFC2','FC3h', 'FC4h', 'FCC1', 'FCC2', 'C1h', 'C2h'};
+elec_idx = [15, 8, 199, 16, 7, 17, 177, 9, 167, 23, 6, 24, 184, 43, 176, 44, 166, 45, 122];
+
+perio_post_hc_midfr = zeros(size(elec_idx,2),2,30);
+for subi = 1:length(specpo_hc.specparam_post_HC)
+    for eleci=1: size(elec_idx,2)
+        perio_post_hc_midfr(eleci,1,subi) = specpo_hc.specparam_post_HC(subi).c.data(elec_idx(eleci)).peak_params(1,1);
+        
+        perio_post_hc_midfr(eleci,2,subi) = specpo_hc.specparam_post_HC(subi).ic.data(elec_idx(eleci)).peak_params(1,1);
+        
+    end
+end
+
+csvwrite('peaksmidfr_post_hc.csv', perio_post_hc_midfr);
+
+
+perio_post_pd_midfr = zeros(size(elec_idx,2),2,29);
+for subi = 1:length(specpo_pd.specparam_post_PD)
+    for eleci=1: size(elec_idx,2)
+        perio_post_pd_midfr(eleci,1,subi) = specpo_pd.specparam_post_PD(subi).c.data(elec_idx(eleci)).peak_params(1,1);
+        
+        perio_post_pd_midfr(eleci,2,subi) = specpo_pd.specparam_post_PD(subi).ic.data(elec_idx(eleci)).peak_params(1,1);
+        
+    end
+end
+
+csvwrite('peaksmidfr_post_pd.csv', perio_post_pd_midfr);
 
