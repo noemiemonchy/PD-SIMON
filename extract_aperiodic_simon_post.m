@@ -1,6 +1,7 @@
 %% Extract aperiodic parameters simon task - post stim
 
 %% SPECPARAM STRUCTURES
+% Post stimulus
 %% HC
 % path to subject files
 
@@ -26,7 +27,7 @@ for i = 1:length(spec_files)
     
     load(spec_files(i).name);
     
-    if contains(Comment, 'INCONG')
+    if or(contains(Comment, 'INCONG'), contains(Comment, 'incong'))  
         specparam_post_HC(ic_count).ic = Options.FOOOF;
         specparam_post_HC(ic_count).ic.sub = Comment(8:10);
         specparam_post_HC(ic_count).ic.group = group;
@@ -68,14 +69,14 @@ for i = 1:length(spec_files)
     
     load(spec_files(i).name);
     
-    if contains(Comment, 'INCONG')
+    if or(contains(Comment, 'INCONG'), contains(Comment, 'incong'))
         specparam_post_PD(ic_count).ic = Options.FOOOF;
-        specparam_post_PD(ic_count).ic.sub = Comment(8:10);
+        specparam_post_PD(ic_count).ic.sub = Comment(1:5);
         specparam_post_PD(ic_count).ic.group = group;
         ic_count = ic_count+1;
     else
         specparam_post_PD(c_count).c = Options.FOOOF;
-        specparam_post_PD(c_count).c.sub = Comment(8:10);
+        specparam_post_PD(c_count).c.sub = Comment(1:5);
         specparam_post_PD(c_count).c.group = group;
         c_count = c_count+1;
    end
@@ -83,6 +84,65 @@ for i = 1:length(spec_files)
     
 end
 
+%% SPECPARAM STRUCTURES
+% Pre stimulus or resting
+%% PD
+% path to subject files
+
+spec_path = uigetdir;
+addpath(spec_path);
+cd(spec_path);
+
+spec_files = dir('*specparam.mat'); %chemin pour spec post
+
+specparam_pre_PD = struct;
+
+if contains(spec_path, 'PD')
+    group = 'PD';
+else
+    group = 'HC';
+end
+
+
+for i = 1:length(spec_files)
+    
+    
+    load(spec_files(i).name);
+    
+        specparam_pre_PD(i).spec = Options.FOOOF;
+        specparam_pre_PD(i).sub = Comment(1:5);
+        specparam_pre_PD(i).group = group;    
+end
+
+
+%% HC
+% path to subject files
+
+spec_path = uigetdir;
+addpath(spec_path);
+cd(spec_path);
+
+spec_files = dir('*specparam.mat'); %chemin pour spec post
+
+specparam_pre_HC = struct;
+
+if contains(spec_path, 'PD')
+    group = 'PD';
+else
+    group = 'HC';
+end
+
+
+for i = 1:length(spec_files)
+    
+    
+    load(spec_files(i).name);
+    
+        specparam_pre_HC(i).spec = Options.FOOOF;
+        specparam_pre_HC(i).sub = Comment(1:5);
+        specparam_pre_HC(i).group = group;
+    
+end
 
 %% EXTRACT APERIODIC PARAMETERS
 
