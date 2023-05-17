@@ -208,50 +208,53 @@ write.csv(expo_results_fdr, "expo_results_fdr.csv", row.names=TRUE)
 # We'll do post minus pre, post minus rest, pre minus rest.
 # if stat > 0, then the first term has the greatest value
 
-off_post_results = matrix(nrow=68, ncol=3, byrow=TRUE)
-colnames(off_post_results_sign) = c('post-pre','post-rest','rest-pre')
+exp_post_results = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(exp_post_results) = c('post-pre','post-rest','rest-pre')
 
-off_post_results_sign = matrix(nrow=68, ncol=3, byrow=TRUE)
-colnames(off_post_results_sign) = c('post-pre','post-rest','rest-pre')
+exp_post_results_sign = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(exp_post_results_sign) = c('post-pre','post-rest','rest-pre')
 
 for (roi in 1:68){
   data2 = data %>%
     filter(ROI == roi)
   pwc <- data2 %>%
     pairwise_t_test(
-      offset ~ period, paired = TRUE,
+      exponent ~ period, paired = TRUE,
       p.adjust.method = "bonferroni"
     )
-  off_post_results[roi, 1] = pwc$p.adj[1]
-  off_post_results[roi, 2] = pwc$p.adj[2]
-  off_post_results[roi, 3] = pwc$p.adj[3]
-  off_post_results_sign[roi, 1] = pwc$statistic[1]
-  off_post_results_sign[roi, 2] = pwc$statistic[2]
-  off_post_results_sign[roi, 3] = pwc$statistic[3]
+  exp_post_results[roi, 1] = pwc$p.adj[1]
+  exp_post_results[roi, 2] = pwc$p.adj[2]
+  exp_post_results[roi, 3] = pwc$p.adj[3]
+  exp_post_results_sign[roi, 1] = pwc$statistic[1]
+  exp_post_results_sign[roi, 2] = pwc$statistic[2]
+  exp_post_results_sign[roi, 3] = pwc$statistic[3]
 }
 
 # apply FDR correction on results
-off_post_results_fdr = matrix(nrow=68, ncol=3, byrow=TRUE)
-colnames(off_post_results_fdr) = c('post-pre','post-rest','rest-pre')
+exp_post_results_fdr = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(exp_post_results_fdr) = c('post-pre','post-rest','rest-pre')
 
 for (pi in 1:3){
-  off_post_results_fdr[,pi] = p.adjust(off_post_results[,pi], method = 'fdr', 
-                                   n = length(off_post_results[,pi]))
+  exp_post_results_fdr[,pi] = p.adjust(exp_post_results[,pi], method = 'fdr', 
+                                   n = length(exp_post_results[,pi]))
 }
 
-write.csv(off_post_results_fdr, "off_period_post_results_fdr.csv",
+write.csv(exp_post_results_fdr, "exp_period_post_results_fdr.csv",
           row.names=TRUE)
-write.csv(off_post_results_sign, "off_period_post_results_sign.csv",
+write.csv(exp_post_results_sign, "exp_period_post_results_sign.csv",
           row.names=TRUE)
 
 # Create a 68*3 matrix for each comparisons to show whether the change is + or -
 # We'll do post minus pre, post minus rest, pre minus rest.
-off_post_results_sign = matrix(nrow=68, ncol=3, byrow=TRUE)
-colnames(off_post_results_sign) = c('post-pre','post-rest','rest-pre')
+exp_post_results_sign = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(exp_post_results_sign) = c('post-pre','post-rest','rest-pre')
 for (roi in 1:68){
   data2 = data %>%
     filter(ROI == roi, period == 'Post-stimulus')
 }
+
+
+
 
 # Offset
 
@@ -290,6 +293,59 @@ for (pi in 1:3){
                                    n = length(offset_results[,pi]))
 }
 write.csv(offset_results_fdr, "offset_results_fdr.csv", row.names=TRUE)
+
+# ROI-specific posthoc multiple comparisons
+
+# Create matrix with 3 columns (p post-pre, p post-rest, p rest-pre) and 68 rows
+# and a 68*3 matrix for each comparisons to show whether the change is + or -
+# We'll do post minus pre, post minus rest, pre minus rest.
+# if stat > 0, then the first term has the greatest value
+
+off_post_results = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(off_post_results_sign) = c('post-pre','post-rest','rest-pre')
+
+off_post_results_sign = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(off_post_results_sign) = c('post-pre','post-rest','rest-pre')
+
+for (roi in 1:68){
+  data2 = data %>%
+    filter(ROI == roi)
+  pwc <- data2 %>%
+    pairwise_t_test(
+      offset ~ period, paired = TRUE,
+      p.adjust.method = "bonferroni"
+    )
+  off_post_results[roi, 1] = pwc$p.adj[1]
+  off_post_results[roi, 2] = pwc$p.adj[2]
+  off_post_results[roi, 3] = pwc$p.adj[3]
+  off_post_results_sign[roi, 1] = pwc$statistic[1]
+  off_post_results_sign[roi, 2] = pwc$statistic[2]
+  off_post_results_sign[roi, 3] = pwc$statistic[3]
+}
+
+# apply FDR correction on results
+off_post_results_fdr = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(off_post_results_fdr) = c('post-pre','post-rest','rest-pre')
+
+for (pi in 1:3){
+  off_post_results_fdr[,pi] = p.adjust(off_post_results[,pi], method = 'fdr', 
+                                       n = length(off_post_results[,pi]))
+}
+
+write.csv(off_post_results_fdr, "off_period_post_results_fdr.csv",
+          row.names=TRUE)
+write.csv(off_post_results_sign, "off_period_post_results_sign.csv",
+          row.names=TRUE)
+
+# Create a 68*3 matrix for each comparisons to show whether the change is + or -
+# We'll do post minus pre, post minus rest, pre minus rest.
+off_post_results_sign = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(off_post_results_sign) = c('post-pre','post-rest','rest-pre')
+for (roi in 1:68){
+  data2 = data %>%
+    filter(ROI == roi, period == 'Post-stimulus')
+}
+
 
 # ROI-averaged exponent - task (gp x cong) -------------------------------------
 
