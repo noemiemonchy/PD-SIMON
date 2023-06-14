@@ -379,60 +379,44 @@ print(gcf, "off_pval_post_fig", '-dpng', '-r1000') % pour la résolution  de l'im
 
 
 % Get cong/incong data
-post_exp = zeros(59,199,2);
-for subi =1:30
-    post_exp(subi,:,1) =  squeeze(HCtask(subi,:,1,1));
-    post_exp(subi,:,2) = squeeze(HCtask(subi,:,2,1));
-end
-for subi =1:29
-    post_exp(30+subi,:,1) =  squeeze(PDtask(subi,:,1,1));
-    post_exp(30+subi,:,2) = squeeze(PDtask(subi,:,2,1));
-end
 
-
-post_off = zeros(59,199,2);
-for subi =1:30
-    post_off(subi,:,1) =  squeeze(HCtask(subi,:,1,2));
-    post_off(subi,:,2) = squeeze(HCtask(subi,:,2,2));
-end
-for subi =1:29
-    post_off(30+subi,:,1) =  squeeze(PDtask(subi,:,1,2));
-    post_off(30+subi,:,2) = squeeze(PDtask(subi,:,2,2));
-end
-
-% post_HC_exp_c =  squeeze(mean(HCtask(:,:,1,1), 1));
-% post_HC_exp_ic = squeeze(mean(HCtask(:,:,2,1), 1));
-% post_PD_exp_c = squeeze(mean(PDtask(:,:,1,1), 1));
-% post_PD_exp_ic = squeeze(mean(PDtask(:,:,2,1), 1));
-% post_HC_off_c = squeeze(mean(HCtask(:,:,1,2), 1));
-% post_HC_off_ic = squeeze(mean(HCtask(:,:,2,2), 1));
-% post_PD_off_c = squeeze(mean(PDtask(:,:,1,2), 1));
-% post_PD_off_ic = squeeze(mean(PDtask(:,:,2,2), 1));
+post_HC_exp_c =  squeeze(mean(HCtask(:,:,1,1), 1));
+post_HC_exp_ic = squeeze(mean(HCtask(:,:,2,1), 1));
+post_PD_exp_c = squeeze(mean(PDtask(:,:,1,1), 1));
+post_PD_exp_ic = squeeze(mean(PDtask(:,:,2,1), 1));
+post_HC_off_c = squeeze(mean(HCtask(:,:,1,2), 1));
+post_HC_off_ic = squeeze(mean(HCtask(:,:,2,2), 1));
+post_PD_off_c = squeeze(mean(PDtask(:,:,1,2), 1));
+post_PD_off_ic = squeeze(mean(PDtask(:,:,2,2), 1));
 
 
 
 % plot exponent post stim cong/incong
 
-expo_c_fig = figure
-topoplot(squeeze(mean(post_exp(:,:,1), 1)),chanlocs, 'electrodes', 'off', ...
+%  get limits from both datasets
+forlims = cat(1, mean(exp4test_hc, 2), mean(exp4test_pd, 2));
+clim = [min(forlims), max(forlims)];
+
+expo_hc_fig = figure
+topoplot(mean(exp4test_hc, 1),chanlocs, 'electrodes', 'off', ...
     'gridscale', 500)
 set(gca, 'clim', clim);
 colormap(parula)
-title({'Congruent', 'Exponent'}, 'FontSize', 20, 'FontWeight', 'normal')
+title({'HC', 'Exponent'}, 'FontSize', 20, 'FontWeight', 'normal')
 set(gcf,'Position',[100 100 300 400])
 colorbar
-print(gcf, "expo_c_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
+print(gcf, "expo_hc_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
 
 
-expo_ic_fig = figure
-topoplot(squeeze(mean(post_exp(:,:,2), 1)),chanlocs, 'electrodes', 'off', ...
+expo_pd_fig = figure
+topoplot(mean(exp4test_pd, 1),chanlocs, 'electrodes', 'off', ...
     'gridscale', 500)
 set(gca, 'clim', clim);
 colormap(parula)
-title({'Incongruent', 'Exponent'}, 'FontSize', 20, 'FontWeight', 'normal')
+title({'PD', 'Exponent'}, 'FontSize', 20, 'FontWeight', 'normal')
 set(gcf,'Position',[100 100 300 400])
 colorbar
-print(gcf, "expo_ic_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
+print(gcf, "expo_pd_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
 
 figure
 topoplot(zeros(1,199), chanlocs, 'electrodes', 'off',...
@@ -441,50 +425,13 @@ topoplot(zeros(1,199), chanlocs, 'electrodes', 'off',...
 title('p-value')
 colorbar
 colormap(redbluecmap)
-title({'Congruence effect', 'significant electrodes'}, 'FontSize', 20, 'FontWeight', 'normal')
+title({'Group effect', 'significant electrodes'}, 'FontSize', 20, 'FontWeight', 'normal')
 set(gcf,'Position',[100 100 300 400])
 colorbar
-print(gcf, "expo_pval_congruence_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
+print(gcf, "expo_pval_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
 
 
 
-
-
-% plot offset post stim cong/incong
-
-
-off_c_fig = figure
-topoplot(squeeze(mean(post_off(:,:,1), 1)),chanlocs, 'electrodes', 'off', ...
-    'gridscale', 500)
-set(gca, 'clim', clim);
-colormap(parula)
-title({'Congruent', 'Offset'}, 'FontSize', 20, 'FontWeight', 'normal')
-set(gcf,'Position',[100 100 300 400])
-colorbar
-print(gcf, "off_c_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
-
-
-off_ic_fig = figure
-topoplot(squeeze(mean(post_off(:,:,2), 1)),chanlocs, 'electrodes', 'off', ...
-    'gridscale', 500)
-set(gca, 'clim', clim);
-colormap(parula)
-title({'Incongruent', 'Offset'}, 'FontSize', 20, 'FontWeight', 'normal')
-set(gcf,'Position',[100 100 300 400])
-colorbar
-print(gcf, "off_ic_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
-
-figure
-topoplot(zeros(1,199), chanlocs, 'electrodes', 'off',...
-    'emarkersize', 25, 'electcolor', [0.8500 0.3250 0.0980],...
-    'gridscale', 300)
-title('p-value')
-colorbar
-colormap(redbluecmap)
-title({'Congruence effect', 'significant electrodes'}, 'FontSize', 20, 'FontWeight', 'normal')
-set(gcf,'Position',[100 100 300 400])
-colorbar
-print(gcf, "off_pval_congruence_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
 
 
 
