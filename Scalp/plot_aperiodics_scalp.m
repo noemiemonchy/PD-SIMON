@@ -23,11 +23,11 @@ nelec = 199;
 % nsub * elec * condition (1 rest / 2 pre/3 post) * aperio (1 expo/2 offset) 
 HC = zeros(length(specparam_post_HC_sorted), nelec, 3, 2);
 % Same but for the task, differenciating c and ic, % nsub * elec * condition (1 c / 2 ic) * aperio (1 expo/2 offset) 
-HCtask = zeros(length(specparam_post_HC_sorted), nelec, 2, 2)
+HCtask = zeros(length(specparam_post_HC_sorted), nelec, 2, 2);
 
 % Same for PD
 PD = zeros(length(specparam_post_PD_sorted), nelec, 3, 2);
-PDtask = zeros(length(specparam_post_PD_sorted), nelec, 2, 2)
+PDtask = zeros(length(specparam_post_PD_sorted), nelec, 2, 2);
 
 % For HC
 for subi = 1:size(HC, 1) 
@@ -252,14 +252,21 @@ end
 graph_t = rmmissing(t);
 writetable(graph_t, ['scalp_aperiodic_param_post_task.csv']);
 
-%% Stats on region-specific group changes in exponent and offset
+%% Stats and topoplot on region-specific group changes in exponent and offset
 results = zeros(199,2); % first col is exponent, second is offset
+
+exp4test_hc = squeeze(HC(:, : , 3, 1));
+exp4test_pd = squeeze(PD(:, : , 3, 1));
+
+off4test_hc = squeeze(HC(:, : , 3, 2));
+off4test_pd = squeeze(PD(:, : , 3, 2));
+
 % two-sided t tests
-for elec = 1:99
-    [h,p,ci,stats] = ttest2(exponent_hc(:,elec), exponent_pd(:,elec));
+for elec = 1:199
+    [h,p,ci,stats] = ttest2(exp4test_hc(:,elec), exp4test_pd(:,elec));
     results(elec, 1) = p;
 
-    [h,p,ci,stats] = ttest2(offset_hc(:,elec), offset_pd(:,elec));
+    [h,p,ci,stats] = ttest2(off4test_hc(:,elec), off4test_pd(:,elec));
     results(elec, 2) = p;
 end
 FDR = zeros(199, 2);
@@ -273,11 +280,239 @@ expo_fdr = adj_p<0.05;
 
 [h, crit_p, adj_ci_cvrg, adj_p] = fdr_bh(results(:,2))
 offset_fdr = adj_p<0.05;
+
+% sign offset
 for elec = 1:199
-    if mean(offset_pd(:,elec), 1) < mean(offset_hc(:,elec), 1)
+    if mean(off4test_pd(:,elec), 1) < mean(off4test_hc(:,elec), 1)
         offset_fdr(elec) = - offset_fdr(elec);
     end
 end
+
+% sign expo
+for elec = 1:199
+    if mean(exp4test_pd(:,elec), 1) < mean(exp4test_hc(:,elec), 1)
+        expo_fdr(elec) = - expo_fdr(elec);
+    end
+end
+
+% plot exponent post stim
+
+% Load channels location : 199chanlocs.mat
+cd(uigetdir())
+load('199chanlocs.mat'); % add your path to the channel file
+
+%  get limits from both datasets
+forlims = cat(1, mean(exp4test_hc, 2), mean(exp4test_pd, 2));
+clim = [min(forlims), max(forlims)];
+
+expo_hc_fig = figure
+topoplot(mean(exp4test_hc, 1),chanlocs, 'electrodes', 'off', ...
+    'gridscale', 500)
+set(gca, 'clim', clim);
+colormap(parula)
+title({'HC', 'Exponent'}, 'FontSize', 20, 'FontWeight', 'normal')
+set(gcf,'Position',[100 100 300 400])
+colorbar
+print(gcf, "expo_hc_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
+
+
+expo_pd_fig = figure
+topoplot(mean(exp4test_pd, 1),chanlocs, 'electrodes', 'off', ...
+    'gridscale', 500)
+set(gca, 'clim', clim);
+colormap(parula)
+title({'PD', 'Exponent'}, 'FontSize', 20, 'FontWeight', 'normal')
+set(gcf,'Position',[100 100 300 400])
+colorbar
+print(gcf, "expo_pd_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
+
+figure
+topoplot(zeros(1,199), chanlocs, 'electrodes', 'off',...
+    'emarkersize', 25, 'electcolor', [0.8500 0.3250 0.0980],...
+    'gridscale', 300)
+title('p-value')
+colorbar
+colormap(redbluecmap)
+title({'Group effect', 'significant electrodes'}, 'FontSize', 20, 'FontWeight', 'normal')
+set(gcf,'Position',[100 100 300 400])
+colorbar
+print(gcf, "expo_pval_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
+
+
+% plot offset post stim
+
+%  get limits from both datasets
+forlims = cat(1, mean(off4test_hc, 2), mean(off4test_pd, 2));
+clim = [min(forlims), max(forlims)];
+
+off_hc_fig = figure
+topoplot(mean(off4test_hc, 1),chanlocs, 'electrodes', 'off', ...
+    'gridscale', 500)
+set(gca, 'clim', clim);
+colormap(parula)
+title({'HC', 'Offset'}, 'FontSize', 20, 'FontWeight', 'normal')
+set(gcf,'Position',[100 100 300 400])
+colorbar
+print(gcf, "off_hc_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
+
+
+off_pd_fig = figure
+topoplot(mean(off4test_pd, 1),chanlocs, 'electrodes', 'off', ...
+    'gridscale', 500)
+set(gca, 'clim', clim);
+colormap(parula)
+title({'PD', 'Offset'}, 'FontSize', 20, 'FontWeight', 'normal')
+set(gcf,'Position',[100 100 300 400])
+colorbar
+print(gcf, "off_pd_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
+
+figure
+topoplot(zeros(1,sum(offset_fdr)), chanlocs(offset_fdr), 'electrodes', 'on',...
+    'emarkersize', 20, 'electcolor', [0.8500 0.3250 0.0980],...
+    'gridscale', 300)
+colorbar
+colormap(redbluecmap)
+title({'Group effect', 'significant electrodes'}, 'FontSize', 20, 'FontWeight', 'normal')
+set(gcf,'Position',[100 100 300 400])
+colorbar
+print(gcf, "off_pval_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
+
+
+% Get cong/incong data
+post_exp = zeros(59,199,2);
+for subi =1:30
+    post_exp(subi,:,1) =  squeeze(HCtask(subi,:,1,1));
+    post_exp(subi,:,2) = squeeze(HCtask(subi,:,2,1));
+end
+for subi =1:29
+    post_exp(30+subi,:,1) =  squeeze(PDtask(subi,:,1,1));
+    post_exp(30+subi,:,2) = squeeze(PDtask(subi,:,2,1));
+end
+
+
+post_off = zeros(59,199,2);
+for subi =1:30
+    post_off(subi,:,1) =  squeeze(HCtask(subi,:,1,2));
+    post_off(subi,:,2) = squeeze(HCtask(subi,:,2,2));
+end
+for subi =1:29
+    post_off(30+subi,:,1) =  squeeze(PDtask(subi,:,1,2));
+    post_off(30+subi,:,2) = squeeze(PDtask(subi,:,2,2));
+end
+
+% post_HC_exp_c =  squeeze(mean(HCtask(:,:,1,1), 1));
+% post_HC_exp_ic = squeeze(mean(HCtask(:,:,2,1), 1));
+% post_PD_exp_c = squeeze(mean(PDtask(:,:,1,1), 1));
+% post_PD_exp_ic = squeeze(mean(PDtask(:,:,2,1), 1));
+% post_HC_off_c = squeeze(mean(HCtask(:,:,1,2), 1));
+% post_HC_off_ic = squeeze(mean(HCtask(:,:,2,2), 1));
+% post_PD_off_c = squeeze(mean(PDtask(:,:,1,2), 1));
+% post_PD_off_ic = squeeze(mean(PDtask(:,:,2,2), 1));
+
+
+
+% plot exponent post stim cong/incong
+
+expo_c_fig = figure
+topoplot(squeeze(mean(post_exp(:,:,1), 1)),chanlocs, 'electrodes', 'off', ...
+    'gridscale', 500)
+set(gca, 'clim', clim);
+colormap(parula)
+title({'Congruent', 'Exponent'}, 'FontSize', 20, 'FontWeight', 'normal')
+set(gcf,'Position',[100 100 300 400])
+colorbar
+print(gcf, "expo_c_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
+
+
+expo_ic_fig = figure
+topoplot(squeeze(mean(post_exp(:,:,2), 1)),chanlocs, 'electrodes', 'off', ...
+    'gridscale', 500)
+set(gca, 'clim', clim);
+colormap(parula)
+title({'Incongruent', 'Exponent'}, 'FontSize', 20, 'FontWeight', 'normal')
+set(gcf,'Position',[100 100 300 400])
+colorbar
+print(gcf, "expo_ic_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
+
+figure
+topoplot(zeros(1,199), chanlocs, 'electrodes', 'off',...
+    'emarkersize', 25, 'electcolor', [0.8500 0.3250 0.0980],...
+    'gridscale', 300)
+title('p-value')
+colorbar
+colormap(redbluecmap)
+title({'Congruence effect', 'significant electrodes'}, 'FontSize', 20, 'FontWeight', 'normal')
+set(gcf,'Position',[100 100 300 400])
+colorbar
+print(gcf, "expo_pval_congruence_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
+
+
+
+
+
+% plot offset post stim cong/incong
+
+
+off_c_fig = figure
+topoplot(squeeze(mean(post_off(:,:,1), 1)),chanlocs, 'electrodes', 'off', ...
+    'gridscale', 500)
+set(gca, 'clim', clim);
+colormap(parula)
+title({'Congruent', 'Offset'}, 'FontSize', 20, 'FontWeight', 'normal')
+set(gcf,'Position',[100 100 300 400])
+colorbar
+print(gcf, "off_c_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
+
+
+off_ic_fig = figure
+topoplot(squeeze(mean(post_off(:,:,2), 1)),chanlocs, 'electrodes', 'off', ...
+    'gridscale', 500)
+set(gca, 'clim', clim);
+colormap(parula)
+title({'Incongruent', 'Offset'}, 'FontSize', 20, 'FontWeight', 'normal')
+set(gcf,'Position',[100 100 300 400])
+colorbar
+print(gcf, "off_ic_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
+
+figure
+topoplot(zeros(1,199), chanlocs, 'electrodes', 'off',...
+    'emarkersize', 25, 'electcolor', [0.8500 0.3250 0.0980],...
+    'gridscale', 300)
+title('p-value')
+colorbar
+colormap(redbluecmap)
+title({'Congruence effect', 'significant electrodes'}, 'FontSize', 20, 'FontWeight', 'normal')
+set(gcf,'Position',[100 100 300 400])
+colorbar
+print(gcf, "off_pval_congruence_post_fig", '-dpng', '-r1000') % pour la résolution  de l'image
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 % On the regio averaged data

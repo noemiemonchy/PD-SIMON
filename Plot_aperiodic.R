@@ -1,9 +1,12 @@
 library(tidyverse)
-library(ggplot2)
 library(ggpubr)
 library(see)
 library(ggbeeswarm)
 library(rstatix)
+library(svglite)
+library(gridExtra)
+
+
 
 # ROI-averaged exponent - period -----------------------------------------------
 
@@ -16,12 +19,12 @@ exp <- data %>%
   mutate(period = fct_relevel(period, "Rest", 
                               "Pre-stimulus", "Post-stimulus")) %>%
   ggplot(aes(x = period, y = averaged_exponent, fill = group))+
-  scale_fill_manual(values=c("#6699CC", "#EE7733")) +
+  scale_fill_manual(values=c("#1f77b4", "#ff7f0e")) +
   geom_violin()+
   geom_boxplot(notch = F,  outlier.size = -1, color="black", 
-               lwd=0.5, alpha = 0.7,show.legend = F, width = 0.12,
+               lwd=0.5, alpha = 0.7,show.legend = T, width = 0.15,
                position = position_dodge(width = 0.9))+
-  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.25, 
+  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, 
                position = position_dodge(width = 0.9))+
   theme_minimal()+
   ylab(c("ROI-averaged exponent"))  +
@@ -31,7 +34,7 @@ exp <- data %>%
     axis.ticks = element_line(size=1,color="black"),
     axis.text = element_text(color="black"),
     axis.ticks.length=unit(0.2,"cm"),
-    legend.position = "none",
+    legend.position = c(0.95, 0.15),
     plot.title = element_text(size = 20))+
   font("xylab",size=15)+  
   font("xy",size=15)+ 
@@ -39,9 +42,9 @@ exp <- data %>%
   font("legend.text",size = 15)+
   guides(fill = guide_legend(override.aes = list(alpha = 1,color="black")))
 
-exp
+
 # Stats
-data2 <- data %>% # modification faite ici, demander à Joan si c'est ok 
+data <- data %>%
 convert_as_factor(sub, period, group)
 
 # Descriptive stats
@@ -91,22 +94,22 @@ off <- data %>%
   mutate(period = fct_relevel(period, "Rest", 
                               "Pre-stimulus", "Post-stimulus")) %>%
   ggplot(aes(x = period, y = averaged_offset, fill = group))+
-  scale_fill_manual(values=c("#6699CC", "#EE7733")) +
+  scale_fill_manual(values=c("#884da7", "#b67823")) +
   geom_violin()+
   geom_boxplot(notch = F,  outlier.size = -1, color="black",lwd=0.5, 
-               alpha = 0.7,show.legend = T, width = 0.12,
+               alpha = 0.7,show.legend = T, width = 0.15,
                position = position_dodge(width = 0.9))+
-  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.25, 
+  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, 
                position = position_dodge(width = 0.9))+
   theme_minimal()+
-  ylab(c("Electrode-averaged offset"))  +
+  ylab(c("ROI-averaged offset"))  +
   xlab(c(""))+
   theme(#panel.border = element_rect(colour = "black", fill=NA, size=2),
     axis.line = element_line(colour = "black",size=1),
     axis.ticks = element_line(size=1,color="black"),
     axis.text = element_text(color="black"),
     axis.ticks.length=unit(0.2,"cm"),
-    legend.position = "none",
+    legend.position = c(0.95, 0.15),
     plot.title = element_text(size = 20))+
   font("xylab",size=15)+  
   font("xy",size=15)+ 
@@ -114,9 +117,7 @@ off <- data %>%
   font("legend.text",size = 15)+
   guides(fill = guide_legend(override.aes = list(alpha = 1,color="black")))
 
-off
-library(cowplot)
-plot_grid(exp, off, labels = c("A", "B"))
+
 # Stats
 
 # Descriptive stats
@@ -211,50 +212,53 @@ write.csv(expo_results_fdr, "expo_results_fdr.csv", row.names=TRUE)
 # We'll do post minus pre, post minus rest, pre minus rest.
 # if stat > 0, then the first term has the greatest value
 
-off_post_results = matrix(nrow=68, ncol=3, byrow=TRUE)
-colnames(off_post_results_sign) = c('post-pre','post-rest','rest-pre')
+exp_post_results = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(exp_post_results) = c('post-pre','post-rest','rest-pre')
 
-off_post_results_sign = matrix(nrow=68, ncol=3, byrow=TRUE)
-colnames(off_post_results_sign) = c('post-pre','post-rest','rest-pre')
+exp_post_results_sign = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(exp_post_results_sign) = c('post-pre','post-rest','rest-pre')
 
 for (roi in 1:68){
   data2 = data %>%
     filter(ROI == roi)
   pwc <- data2 %>%
     pairwise_t_test(
-      offset ~ period, paired = TRUE,
+      exponent ~ period, paired = TRUE,
       p.adjust.method = "bonferroni"
     )
-  off_post_results[roi, 1] = pwc$p.adj[1]
-  off_post_results[roi, 2] = pwc$p.adj[2]
-  off_post_results[roi, 3] = pwc$p.adj[3]
-  off_post_results_sign[roi, 1] = pwc$statistic[1]
-  off_post_results_sign[roi, 2] = pwc$statistic[2]
-  off_post_results_sign[roi, 3] = pwc$statistic[3]
+  exp_post_results[roi, 1] = pwc$p.adj[1]
+  exp_post_results[roi, 2] = pwc$p.adj[2]
+  exp_post_results[roi, 3] = pwc$p.adj[3]
+  exp_post_results_sign[roi, 1] = pwc$statistic[1]
+  exp_post_results_sign[roi, 2] = pwc$statistic[2]
+  exp_post_results_sign[roi, 3] = pwc$statistic[3]
 }
 
 # apply FDR correction on results
-off_post_results_fdr = matrix(nrow=68, ncol=3, byrow=TRUE)
-colnames(off_post_results_fdr) = c('post-pre','post-rest','rest-pre')
+exp_post_results_fdr = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(exp_post_results_fdr) = c('post-pre','post-rest','rest-pre')
 
 for (pi in 1:3){
-  off_post_results_fdr[,pi] = p.adjust(off_post_results[,pi], method = 'fdr', 
-                                   n = length(off_post_results[,pi]))
+  exp_post_results_fdr[,pi] = p.adjust(exp_post_results[,pi], method = 'fdr', 
+                                   n = length(exp_post_results[,pi]))
 }
 
-write.csv(off_post_results_fdr, "off_period_post_results_fdr.csv",
+write.csv(exp_post_results_fdr, "exp_period_post_results_fdr.csv",
           row.names=TRUE)
-write.csv(off_post_results_sign, "off_period_post_results_sign.csv",
+write.csv(exp_post_results_sign, "exp_period_post_results_sign.csv",
           row.names=TRUE)
 
 # Create a 68*3 matrix for each comparisons to show whether the change is + or -
 # We'll do post minus pre, post minus rest, pre minus rest.
-off_post_results_sign = matrix(nrow=68, ncol=3, byrow=TRUE)
-colnames(off_post_results_sign) = c('post-pre','post-rest','rest-pre')
+exp_post_results_sign = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(exp_post_results_sign) = c('post-pre','post-rest','rest-pre')
 for (roi in 1:68){
   data2 = data %>%
     filter(ROI == roi, period == 'Post-stimulus')
 }
+
+
+
 
 # Offset
 
@@ -294,40 +298,92 @@ for (pi in 1:3){
 }
 write.csv(offset_results_fdr, "offset_results_fdr.csv", row.names=TRUE)
 
+# ROI-specific posthoc multiple comparisons
+
+# Create matrix with 3 columns (p post-pre, p post-rest, p rest-pre) and 68 rows
+# and a 68*3 matrix for each comparisons to show whether the change is + or -
+# We'll do post minus pre, post minus rest, pre minus rest.
+# if stat > 0, then the first term has the greatest value
+
+off_post_results = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(off_post_results_sign) = c('post-pre','post-rest','rest-pre')
+
+off_post_results_sign = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(off_post_results_sign) = c('post-pre','post-rest','rest-pre')
+
+for (roi in 1:68){
+  data2 = data %>%
+    filter(ROI == roi)
+  pwc <- data2 %>%
+    pairwise_t_test(
+      offset ~ period, paired = TRUE,
+      p.adjust.method = "bonferroni"
+    )
+  off_post_results[roi, 1] = pwc$p.adj[1]
+  off_post_results[roi, 2] = pwc$p.adj[2]
+  off_post_results[roi, 3] = pwc$p.adj[3]
+  off_post_results_sign[roi, 1] = pwc$statistic[1]
+  off_post_results_sign[roi, 2] = pwc$statistic[2]
+  off_post_results_sign[roi, 3] = pwc$statistic[3]
+}
+
+# apply FDR correction on results
+off_post_results_fdr = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(off_post_results_fdr) = c('post-pre','post-rest','rest-pre')
+
+for (pi in 1:3){
+  off_post_results_fdr[,pi] = p.adjust(off_post_results[,pi], method = 'fdr', 
+                                       n = length(off_post_results[,pi]))
+}
+
+write.csv(off_post_results_fdr, "off_period_post_results_fdr.csv",
+          row.names=TRUE)
+write.csv(off_post_results_sign, "off_period_post_results_sign.csv",
+          row.names=TRUE)
+
+# Create a 68*3 matrix for each comparisons to show whether the change is + or -
+# We'll do post minus pre, post minus rest, pre minus rest.
+off_post_results_sign = matrix(nrow=68, ncol=3, byrow=TRUE)
+colnames(off_post_results_sign) = c('post-pre','post-rest','rest-pre')
+for (roi in 1:68){
+  data2 = data %>%
+    filter(ROI == roi, period == 'Post-stimulus')
+}
+
+
 # ROI-averaged exponent - task (gp x cong) -------------------------------------
 
 data = as_tibble(read.table('sources_aperiodic_param_post_task.csv', 
                             sep = ",", header = TRUE))
 
 # Plot
+my_colors = c("#82bfe9","#ffa85b", "#1f77b3", "#ff7f0f")
+
 exp <- data %>%
   group_by(sub, group, congruence) %>% 
-  summarize(avg.exp = mean(exponent)) %>%
-  ggplot(aes(x = congruence, y = avg.exp, fill = group))+
-  scale_fill_manual(values=c("#884da7", "#b67823")) +
-  geom_violin()+
+  summarize(avg.exp = mean(exponent)) 
+exp$inter = interaction(exp$group, exp$congruence)
+
+EXP_roi = ggplot(exp, aes(x = group, y = avg.exp, fill = inter))+
+  geom_violin() +
+  scale_fill_manual(values=my_colors)+
   geom_boxplot(notch = F,  outlier.size = -1, color="black", 
                lwd=0.5, alpha = 0.7,show.legend = T, width = 0.15,
                position = position_dodge(width = 0.9))+
-  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, 
+  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.35, 
                position = position_dodge(width = 0.9))+
+  scale_color_manual(values=my_colors)+
   theme_minimal()+
-  ylab(c("ROI-averaged exponent"))  +
-  xlab(c(""))+
-  theme(#panel.border = element_rect(colour = "black", fill=NA, size=2),
-    axis.line = element_line(colour = "black",size=1),
-    axis.ticks = element_line(size=1,color="black"),
-    axis.text = element_text(color="black"),
-    axis.ticks.length=unit(0.2,"cm"),
-    legend.position = c(0.95, 0.15),
-    plot.title = element_text(size = 20))+
-  font("xylab",size=15)+  
-  font("xy",size=15)+ 
-  font("xy.text", size = 15) +  
-  font("legend.text",size = 15)+
-  guides(fill = guide_legend(override.aes = list(alpha = 1,color="black")))
+  ggtitle("A")+
+  theme(legend.position="none",
+        plot.title = element_text(face = "bold"),
+        axis.title.y=element_text(vjust=1.25),
+        axis.title.x = element_blank(),
+        text=element_text(colour="black", size=14),
+        panel.background = element_rect(fill=NA, colour='black', size=1))+
+  scale_y_continuous(name="ROI-averaged exponent")
 
-exp 
+
 # Stats
 data2 <- data %>%
   group_by(sub, group, congruence) %>% 
@@ -365,50 +421,49 @@ res.aov <- anova_test(
 get_anova_table(res.aov, correction = c("auto")) # auto applies 
 # correction if Mauchly test shows violation of sphericity
 
-?anova_test
-
-
-# Prendre les données de la partie 0 ci-dessus.
-
-
-test = lm(data2$averaged_exponent~factor(data2$group)*factor(data2$congruence))
-test2<-anova(test)
-test2
-
-
 
 
 # ROI-averaged offset - task (gp x cong) ---------------------------------------
 
 # Plot
+my_colors = c("#82bfe9","#ffa85b", "#1f77b3", "#ff7f0f")
+
 off <- data %>%
   group_by(sub, group, congruence) %>% 
-  summarize(avg.off = mean(offset)) %>%
-  ggplot(aes(x = congruence, y = avg.off, fill = group))+
-  scale_fill_manual(values=c("#884da7", "#b67823")) +
-  geom_violin()+
-  geom_boxplot(notch = F,  outlier.size = -1, color="black",lwd=0.5, 
-               alpha = 0.7,show.legend = T, width = 0.15,
-               position = position_dodge(width = 0.9))+
-  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, 
-               position = position_dodge(width = 0.9))+
-  theme_minimal()+
-  ylab(c("ROI-averaged offset"))  +
-  xlab(c(""))+
-  theme(#panel.border = element_rect(colour = "black", fill=NA, size=2),
-    axis.line = element_line(colour = "black",size=1),
-    axis.ticks = element_line(size=1,color="black"),
-    axis.text = element_text(color="black"),
-    axis.ticks.length=unit(0.2,"cm"),
-    legend.position = c(0.95, 0.15),
-    plot.title = element_text(size = 20))+
-  font("xylab",size=15)+  
-  font("xy",size=15)+ 
-  font("xy.text", size = 15) +  
-  font("legend.text",size = 15)+
-  guides(fill = guide_legend(override.aes = list(alpha = 1,color="black")))
+  summarize(avg.off = mean(offset)) 
+off$inter = interaction(off$group, off$congruence)
 
-off
+OFF_roi = ggplot(off, aes(x = group, y = avg.off, fill = inter))+
+  geom_violin() +
+  scale_fill_manual(values=my_colors)+
+  geom_boxplot(notch = F,  outlier.size = -1, color="black", 
+               lwd=0.5, alpha = 0.7,show.legend = T, width = 0.15,
+               position = position_dodge(width = 0.9))+
+  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.35, 
+               position = position_dodge(width = 0.9))+
+  scale_color_manual(values=my_colors)+
+  theme_minimal()+
+  ggtitle("B")+
+  theme(legend.position="none",
+        plot.title = element_text(face = "bold"),
+        axis.title.y=element_text(vjust=1.25),
+        axis.title.x = element_blank(),
+        text=element_text(colour="black", size=14),
+        panel.background = element_rect(fill=NA, colour='black', size=1))+
+  scale_y_continuous(name="ROI-averaged offset")
+
+
+avg_aperio_plot = grid.arrange(EXP_roi, OFF_roi, ncol=2, nrow = 1)
+
+ggsave(
+  "Fig4AB.svg",
+  avg_aperio_plot,
+  width = 7.48,
+  height = 3,
+  dpi = 500
+)
+
+
 # Stats
 data2 <- data %>%
   group_by(sub, group, congruence) %>% 
@@ -523,5 +578,119 @@ for (pi in 1:3){
 }
 
 write.csv(offset_results_fdr, "offset_results_task_fdr.csv", row.names=TRUE)
+
+
+
+
+
+
+
+
+
+
+
+
+# Electrode-averaged exponent - task (gp x cong) -------------------------------------
+
+data = as_tibble(read.table('scalp_aperiodic_param_post_task.csv', 
+                            sep = ",", header = TRUE))
+
+my_colors = c("#82bfe9","#ffa85b", "#1f77b3", "#ff7f0f")
+
+# Plot
+exp <- data %>%
+  group_by(sub, group, congruence) %>% 
+  summarize(avg.exp = mean(exponent)) 
+  exp$inter = interaction(exp$group, exp$congruence)
+  
+  EXP_scalp = ggplot(exp, aes(x = group, y = avg.exp, fill = inter))+
+    geom_violin() +
+    scale_fill_manual(values=my_colors)+
+    geom_boxplot(notch = F,  outlier.size = -1, color="black", 
+                 lwd=0.5, alpha = 0.7,show.legend = T, width = 0.15,
+                 position = position_dodge(width = 0.9))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=0.35, 
+                 position = position_dodge(width = 0.9))+
+    scale_color_manual(values=my_colors)+
+    theme_minimal()+
+    ggtitle("A")+
+    theme(legend.position="none",
+          plot.title = element_text(face = "bold"),
+          axis.title.y=element_text(vjust=1.25),
+          axis.title.x = element_blank(),
+          text=element_text(colour="black", size=14),
+          panel.background = element_rect(fill=NA, colour='black', size=1))+
+    scale_y_continuous(name="Electrode-averaged exponent")
+  
+  off <- data %>%
+    group_by(sub, group, congruence) %>% 
+    summarize(avg.off = mean(offset)) 
+  off$inter = interaction(off$group, off$congruence)
+  
+  OFF_scalp = ggplot(off, aes(x = group, y = avg.off, fill = inter))+
+    geom_violin() +
+    scale_fill_manual(values=my_colors)+
+    geom_boxplot(notch = F,  outlier.size = -1, color="black", 
+                 lwd=0.5, alpha = 0.7,show.legend = T, width = 0.15,
+                 position = position_dodge(width = 0.9))+
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=0.35, 
+                 position = position_dodge(width = 0.9))+
+    scale_color_manual(values=my_colors)+
+    theme_minimal()+
+    ggtitle("B")+
+    theme(legend.position="none",
+          plot.title = element_text(face = "bold"),
+          axis.title.y=element_text(vjust=1.25),
+          axis.title.x = element_blank(),
+          text=element_text(colour="black", size=14),
+          panel.background = element_rect(fill=NA, colour='black', size=1))+
+    scale_y_continuous(name="Electrode-averaged offset")
+ 
+  avg_aperio_plot = grid.arrange(EXP_scalp, OFF_scalp, ncol=2, nrow = 1)
+  
+  ggsave(
+    "Fig3AB.svg",
+    avg_aperio_plot,
+    width = 7.48,
+    height = 3,
+    dpi = 500
+  )
+# Stats
+data2 <- data %>%
+  group_by(sub, group, congruence) %>% 
+  summarize(averaged_exponent = mean(exponent)) %>%
+  convert_as_factor(sub, congruence, group)
+
+# Descriptive stats
+data2 %>%
+  group_by(congruence, group) %>%
+  get_summary_stats(averaged_exponent, type = "mean_sd")
+# Fast plot
+bxp <- ggboxplot(
+  data2, x = "congruence", y = "averaged_exponent",
+  color = "group", palette = "jco"
+)
+bxp
+# Identify outliers
+data2 %>%
+  group_by(congruence, group) %>%
+  identify_outliers(averaged_exponent)
+# Normality check
+data2 %>%
+  group_by(congruence, group) %>%
+  shapiro_test(averaged_exponent)
+
+ggqqplot(data2, "averaged_exponent", ggtheme = theme_bw()) +
+  facet_grid(congruence ~ group, labeller = "label_both")
+# Calculate anova
+data2 <- as.data.frame(data2)
+
+res.aov <- anova_test(
+  data = data2, dv = averaged_exponent, wid = sub,
+  between = group, within = congruence
+)
+get_anova_table(res.aov, correction = c("auto")) # auto applies 
+# correction if Mauchly test shows violation of sphericity
+
 
 
