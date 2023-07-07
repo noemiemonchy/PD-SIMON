@@ -1,4 +1,5 @@
 library(tidyverse)
+library(ggplot2)
 library(ggpubr)
 library(see)
 library(ggbeeswarm)
@@ -15,12 +16,12 @@ exp <- data %>%
   mutate(period = fct_relevel(period, "Rest", 
                               "Pre-stimulus", "Post-stimulus")) %>%
   ggplot(aes(x = period, y = averaged_exponent, fill = group))+
-  scale_fill_manual(values=c("#884da7", "#b67823")) +
+  scale_fill_manual(values=c("#6699CC", "#EE7733")) +
   geom_violin()+
   geom_boxplot(notch = F,  outlier.size = -1, color="black", 
-               lwd=0.5, alpha = 0.7,show.legend = T, width = 0.15,
+               lwd=0.5, alpha = 0.7,show.legend = F, width = 0.12,
                position = position_dodge(width = 0.9))+
-  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, 
+  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.25, 
                position = position_dodge(width = 0.9))+
   theme_minimal()+
   ylab(c("ROI-averaged exponent"))  +
@@ -30,7 +31,7 @@ exp <- data %>%
     axis.ticks = element_line(size=1,color="black"),
     axis.text = element_text(color="black"),
     axis.ticks.length=unit(0.2,"cm"),
-    legend.position = c(0.95, 0.15),
+    legend.position = "none",
     plot.title = element_text(size = 20))+
   font("xylab",size=15)+  
   font("xy",size=15)+ 
@@ -38,9 +39,9 @@ exp <- data %>%
   font("legend.text",size = 15)+
   guides(fill = guide_legend(override.aes = list(alpha = 1,color="black")))
 
-
+exp
 # Stats
-data <- data %>%
+data2 <- data %>% # modification faite ici, demander à Joan si c'est ok 
 convert_as_factor(sub, period, group)
 
 # Descriptive stats
@@ -90,22 +91,22 @@ off <- data %>%
   mutate(period = fct_relevel(period, "Rest", 
                               "Pre-stimulus", "Post-stimulus")) %>%
   ggplot(aes(x = period, y = averaged_offset, fill = group))+
-  scale_fill_manual(values=c("#884da7", "#b67823")) +
+  scale_fill_manual(values=c("#6699CC", "#EE7733")) +
   geom_violin()+
   geom_boxplot(notch = F,  outlier.size = -1, color="black",lwd=0.5, 
-               alpha = 0.7,show.legend = T, width = 0.15,
+               alpha = 0.7,show.legend = T, width = 0.12,
                position = position_dodge(width = 0.9))+
-  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, 
+  geom_dotplot(binaxis='y', stackdir='center', dotsize=0.25, 
                position = position_dodge(width = 0.9))+
   theme_minimal()+
-  ylab(c("ROI-averaged offset"))  +
+  ylab(c("Electrode-averaged offset"))  +
   xlab(c(""))+
   theme(#panel.border = element_rect(colour = "black", fill=NA, size=2),
     axis.line = element_line(colour = "black",size=1),
     axis.ticks = element_line(size=1,color="black"),
     axis.text = element_text(color="black"),
     axis.ticks.length=unit(0.2,"cm"),
-    legend.position = c(0.95, 0.15),
+    legend.position = "none",
     plot.title = element_text(size = 20))+
   font("xylab",size=15)+  
   font("xy",size=15)+ 
@@ -113,7 +114,9 @@ off <- data %>%
   font("legend.text",size = 15)+
   guides(fill = guide_legend(override.aes = list(alpha = 1,color="black")))
 
-
+off
+library(cowplot)
+plot_grid(exp, off, labels = c("A", "B"))
 # Stats
 
 # Descriptive stats
@@ -324,6 +327,7 @@ exp <- data %>%
   font("legend.text",size = 15)+
   guides(fill = guide_legend(override.aes = list(alpha = 1,color="black")))
 
+exp 
 # Stats
 data2 <- data %>%
   group_by(sub, group, congruence) %>% 
@@ -361,6 +365,17 @@ res.aov <- anova_test(
 get_anova_table(res.aov, correction = c("auto")) # auto applies 
 # correction if Mauchly test shows violation of sphericity
 
+?anova_test
+
+
+# Prendre les données de la partie 0 ci-dessus.
+
+
+test = lm(data2$averaged_exponent~factor(data2$group)*factor(data2$congruence))
+test2<-anova(test)
+test2
+
+
 
 
 # ROI-averaged offset - task (gp x cong) ---------------------------------------
@@ -393,6 +408,7 @@ off <- data %>%
   font("legend.text",size = 15)+
   guides(fill = guide_legend(override.aes = list(alpha = 1,color="black")))
 
+off
 # Stats
 data2 <- data %>%
   group_by(sub, group, congruence) %>% 

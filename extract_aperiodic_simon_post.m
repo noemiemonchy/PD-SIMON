@@ -216,7 +216,7 @@ offpostpd_m = mean(offpostpd,2);
 offpostpd_mm = squeeze(mean(offpostpd_m,1));
 
 forlims = cat(1, offposthc_mm, offpostpd_mm);
-clim = [-12.314, -11.002];
+clim = [-12.314, -10.7];
 
 offset_hc_fig = figure
 topoplot(squeeze(offposthc_mm),chanlocs, 'electrodes', 'off', ...
@@ -247,7 +247,7 @@ expopostpd_m = mean(expopostpd,2);
 expopostpd_mm = squeeze(mean(expopostpd_m,1));
 
 forlims = cat(1, expoposthc_mm, expopostpd_mm);
-clim = [0.422, 1.2197];
+clim = [0.422, 1.387];
 
 exponent_hc_fig = figure
 topoplot(squeeze(expoposthc_mm),chanlocs, 'electrodes', 'off', ...
@@ -266,6 +266,89 @@ title(['Exponent PD'])
 colormap(parula)
 set(gcf,'Position',[100 100 300 300])
 colorbar
+
+% en prenant en considération la congruence pour chaque groupe 
+
+offposthc_cong = offposthc(:,1,:);
+offposthc_cong = squeeze(mean(offposthc_cong,1));
+
+
+offposthc_incong = offposthc(:,2,:);
+offposthc_incong = squeeze(mean(offposthc_incong,1));
+
+forlims = cat(1, offposthc_cong, offposthc_incong);
+clim = [-12.314, -10.7];
+
+offset_hc_fig = figure
+topoplot(squeeze(offposthc_incong),chanlocs, 'electrodes', 'off', ...
+    'gridscale', 500)
+set(gca, 'clim', clim);
+colormap(parula)
+title(['Offset HC INCONG'])
+set(gcf,'Position',[100 100 300 300])
+colorbar
+
+
+offpostpd_cong = offpostpd(:,1,:);
+offpostpd_cong = squeeze(mean(offpostpd_cong,1));
+
+
+offpostpd_incong = offpostpd(:,2,:);
+offpostpd_incong = squeeze(mean(offpostpd_incong,1));
+
+forlims = cat(1, offpostpd_cong, offpostpd_incong);
+clim = [-12.314, -10.7];
+
+offset_hc_fig = figure
+topoplot(squeeze(offpostpd_incong),chanlocs, 'electrodes', 'off', ...
+    'gridscale', 500)
+set(gca, 'clim', clim);
+colormap(parula)
+title(['Offset PD INCONG'])
+set(gcf,'Position',[100 100 300 300])
+colorbar
+
+
+expoposthc_cong = expoposthc(:,1,:);
+expoposthc_cong = squeeze(mean(expoposthc_cong,1));
+
+
+expoposthc_incong = expoposthc(:,2,:);
+expoposthc_incong = squeeze(mean(expoposthc_incong,1));
+
+forlims = cat(1, expoposthc_cong, expoposthc_incong);
+clim = [0.422, 1.387];
+
+exponent_hc_fig = figure
+topoplot(squeeze(expoposthc_incong),chanlocs, 'electrodes', 'off', ...
+    'gridscale', 500)
+set(gca, 'clim', clim);
+title(['Exponent HC INCONG'])
+colormap(parula)
+set(gcf,'Position',[100 100 300 300])
+colorbar
+
+
+
+expopostpd_cong = expopostpd(:,1,:);
+expopostpd_cong = squeeze(mean(expopostpd_cong,1));
+
+
+expopostpd_incong = expopostpd(:,2,:);
+expopostpd_incong = squeeze(mean(expopostpd_incong,1));
+
+forlims = cat(1, expopostpd_cong, expopostpd_incong);
+clim = [0.422, 1.387];
+
+exponent_hc_fig = figure
+topoplot(squeeze(expopostpd_incong),chanlocs, 'electrodes', 'off', ...
+    'gridscale', 500)
+set(gca, 'clim', clim);
+title(['Exponent PD INCONG'])
+colormap(parula)
+set(gcf,'Position',[100 100 300 300])
+colorbar
+
 
 %% TABLEAUX VIOLIN PLOTS
 offposthc_v = mean(offposthc,3);
